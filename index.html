@@ -8,7 +8,7 @@
 
 @font-face {
   font-family: 'Narrow';
-  src: url('Fonts/Arial Narrow.ttf') format('truetype');
+  src: local('Arial Narrow'), local('ArialNarrow'), url('Fonts/Arial Narrow.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
 }
@@ -609,12 +609,14 @@ section { scroll-margin-top: 63px; }
    Keys are permanent; change data shapes by migrating in place, never by renaming a key. */
 const Store = (() => {
   let server = null;
-  try {
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', '/api/store', false);
-    xhr.send();
-    if (xhr.status === 200) server = JSON.parse(xhr.responseText);
-  } catch (e) {}
+  if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', '/api/store', false);
+      xhr.send();
+      if (xhr.status === 200) server = JSON.parse(xhr.responseText);
+    } catch (e) {}
+  }
 
   function readLocal(key) {
     try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
