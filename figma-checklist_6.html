@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Figma Edits — Variant</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f4f1;
+    --surface: #ffffff;
+    --border: #e2e0da;
+    --text: #1a1917;
+    --text-sub: #7a7872;
+    --text-muted: #aeaba3;
+    --green: #1a9e6e;
+    --green-light: #e6f7f1;
+    --blue: #2e5be8;
+    --blue-light: #eef1fd;
+    --purple: #7c3aed;
+    --purple-light: #f3effe;
+    --mono: 'SF Mono', 'Fira Code', monospace;
+    --radius: 7px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2.5rem 2.5rem 4rem;
+  }
+
+  header { margin-bottom: 2rem; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    margin-bottom: 1rem;
+  }
+
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 300px;
+  }
+
+  .progress-track {
+    flex: 1; height: 3px;
+    background: var(--border);
+    border-radius: 99px; overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%; background: var(--green);
+    border-radius: 99px; width: 0%;
+    transition: width 0.35s ease;
+  }
+
+  .progress-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .legend {
+    display: flex; gap: 1.5rem;
+    margin-bottom: 1.5rem; align-items: center;
+  }
+
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--mono);
+    font-size: 10px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--text-muted);
+  }
+
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-desktop { background: var(--blue); }
+  .dot-mobile  { background: var(--green); }
+  .dot-global  { background: var(--purple); }
+
+  .page-section { margin-bottom: 1.75rem; }
+
+  .page-label {
+    font-family: var(--mono);
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-muted);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+
+  .cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr 210px;
+    gap: 10px;
+  }
+
+  .col {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .col-header {
+    padding: 8px 12px;
+    font-family: var(--mono);
+    font-size: 9px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .col-desktop .col-header { color: var(--blue); background: var(--blue-light); }
+  .col-mobile  .col-header { color: var(--green); background: var(--green-light); }
+  .col-global  .col-header { color: var(--purple); background: var(--purple-light); }
+
+  .item {
+    display: flex; align-items: flex-start; gap: 9px;
+    padding: 9px 12px;
+    cursor: pointer; user-select: none;
+    transition: background 0.1s;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: #f7f6f3; }
+  .item.done { opacity: 0.38; }
+  .item.done .label { text-decoration: line-through; color: var(--text-muted); }
+
+  .checkbox {
+    width: 15px; height: 15px; min-width: 15px;
+    border-radius: 4px;
+    border: 1.5px solid var(--border);
+    background: #fafaf9;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 2px;
+    transition: background 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .col-desktop .item.done .checkbox { background: var(--blue); border-color: var(--blue); }
+  .col-mobile  .item.done .checkbox { background: var(--green); border-color: var(--green); }
+  .col-global  .item.done .checkbox { background: var(--purple); border-color: var(--purple); }
+
+  .check-icon {
+    display: none;
+    width: 9px; height: 9px;
+    stroke: white; stroke-width: 2.5; fill: none;
+  }
+  .item.done .check-icon { display: block; }
+
+  .label { font-size: 12.5px; line-height: 1.4; color: var(--text); }
+  .sub { font-size: 11px; color: var(--text-sub); margin-top: 2px; line-height: 1.35; }
+
+  .reset-btn {
+    font-family: var(--mono);
+    font-size: 10px; letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    cursor: pointer;
+    margin-top: 1.5rem;
+    transition: color 0.12s, border-color 0.12s;
+  }
+  .reset-btn:hover { color: var(--text); border-color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Variant · In Progress</p>
+  <h1>Figma Edits</h1>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="bar"></div></div>
+    <span class="progress-label" id="prog">0 / 0</span>
+  </div>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot dot-desktop"></div> Desktop</div>
+  <div class="legend-item"><div class="legend-dot dot-mobile"></div> Mobile</div>
+  <div class="legend-item"><div class="legend-dot dot-global"></div> Global</div>
+</div>
+
+<!-- NAVIGATION -->
+<div class="page-section">
+  <div class="page-label">Navigation</div>
+  <div class="cols">
+    <div class="col col-desktop">
+      <div class="col-header">Desktop</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Fix sticky nav overlapping footer</div><div class="sub">Nested scroll frame scoped above footer</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Pin nav to bottom of screen</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Make logo bigger in nav</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check nav padding and spacing</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Verify button styles in nav</div></div></div>
+    </div>
+    <div class="col col-mobile">
+      <div class="col-header">Mobile</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Fix sticky nav overlapping footer</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check tap target sizing on nav items</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Verify logo sizing on mobile</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check nav padding on mobile</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Test prototype scroll interaction</div></div></div>
+    </div>
+    <div class="col col-global">
+      <div class="col-header">Global</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Find Christian's nav and book it</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Update nav component in library</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- WRITING PDP -->
+<div class="page-section">
+  <div class="page-label">Writing PDP</div>
+  <div class="cols">
+    <div class="col col-desktop">
+      <div class="col-header">Desktop</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Add diagrams</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Make image and text sticky</div><div class="sub">Enable "Fix position when scrolling"</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check heading sizing and type styles</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Fix button styles and padding</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Verify prototype interactions work</div></div></div>
+    </div>
+    <div class="col col-mobile">
+      <div class="col-header">Mobile</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Make image and text sticky on mobile</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check padding and spacing</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Verify components scale correctly</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check Mono Eyebrow type style applied</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Test prototype scroll on mobile frame</div></div></div>
+    </div>
+    <div class="col col-global">
+      <div class="col-header">Global</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Confirm "latest writing" copy</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Update writing component in library</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PORTFOLIO PAGE -->
+<div class="page-section">
+  <div class="page-label">Portfolio Page</div>
+  <div class="cols">
+    <div class="col col-desktop">
+      <div class="col-header">Desktop</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Update category component</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Fix "World" hover not working</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check card padding and sizing</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Verify button styles on filters</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Test all hover prototype interactions</div></div></div>
+    </div>
+    <div class="col col-mobile">
+      <div class="col-header">Mobile</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Verify category component on mobile</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check card sizing and padding</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Verify Mono Eyebrow applied to tags</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check button tap targets</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Test prototype interactions on mobile</div></div></div>
+    </div>
+    <div class="col col-global">
+      <div class="col-header">Global</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Update category component in library</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check all tags are correct</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TEAM PAGE -->
+<div class="page-section">
+  <div class="page-label">Portfolio / Team Page</div>
+  <div class="cols">
+    <div class="col col-desktop">
+      <div class="col-header">Desktop</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Double-check title placement</div><div class="sub">May already be fixed — verify</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Update Jesse's photo on team PDP</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check card and image sizing</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Verify button styles and padding</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Test prototype hover states</div></div></div>
+    </div>
+    <div class="col col-mobile">
+      <div class="col-header">Mobile</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Verify title placement on mobile</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check image sizing and crop on mobile</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Fix padding between cards</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check Mono Eyebrow type applied</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Test prototype tap interactions</div></div></div>
+    </div>
+    <div class="col col-global">
+      <div class="col-header">Global</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Update team card component</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Sync styles to library</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SEARCH -->
+<div class="page-section">
+  <div class="page-label">Search</div>
+  <div class="cols">
+    <div class="col col-desktop">
+      <div class="col-header">Desktop</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Explore alternative search concepts</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check input sizing and padding</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Verify button and tag styles</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Test prototype search interaction</div></div></div>
+    </div>
+    <div class="col col-mobile">
+      <div class="col-header">Mobile</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Explore alternative search concepts</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check input sizing and tap targets</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Verify padding on mobile frame</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Test prototype on mobile</div></div></div>
+    </div>
+    <div class="col col-global">
+      <div class="col-header">Global</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Update search component in library</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Align type styles to global system</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- GLOBAL STYLES -->
+<div class="page-section">
+  <div class="page-label">Global Styles &amp; Components</div>
+  <div class="cols">
+    <div class="col col-desktop">
+      <div class="col-header">Desktop</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Button Mono applied to all buttons</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check all button padding is consistent</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Verify all type styles cleaned up</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Update all components to latest</div></div></div>
+    </div>
+    <div class="col col-mobile">
+      <div class="col-header">Mobile</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Mono Eyebrow applied throughout</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Check all button and tag sizing</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Verify padding is consistent</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Update all components to latest</div></div></div>
+    </div>
+    <div class="col col-global">
+      <div class="col-header">Global</div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Confirm "latest writing" everywhere</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Publish updated component library</div></div></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="label">Final prototype QA pass</div></div></div>
+    </div>
+  </div>
+</div>
+
+<button class="reset-btn" onclick="resetAll()">Reset all</button>
+
+<script>
+  function toggle(el) {
+    el.classList.toggle('done');
+    save(); updateProgress();
+  }
+
+  function updateProgress() {
+    const all = document.querySelectorAll('.item');
+    const done = document.querySelectorAll('.item.done');
+    document.getElementById('bar').style.width = (done.length / all.length * 100) + '%';
+    document.getElementById('prog').textContent = done.length + ' / ' + all.length;
+  }
+
+  function save() {
+    const states = [...document.querySelectorAll('.item')].map(el => el.classList.contains('done'));
+    localStorage.setItem('variant-checklist', JSON.stringify(states));
+  }
+
+  function resetAll() {
+    document.querySelectorAll('.item').forEach(el => el.classList.remove('done'));
+    save(); updateProgress();
+  }
+
+  (function load() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('variant-checklist') || '[]');
+      document.querySelectorAll('.item').forEach((el, i) => { if (saved[i]) el.classList.add('done'); });
+    } catch(e) {}
+    updateProgress();
+  })();
+</script>
+</body>
+</html>

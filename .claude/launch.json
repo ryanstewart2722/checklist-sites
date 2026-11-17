@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "checklist-server",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "port": 8091
+    },
+    {
+      "name": "checklist-test",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js", "--port", "8092", "--data", "data/test-store.json"],
+      "port": 8092
+    }
+  ]
+}

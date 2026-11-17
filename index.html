@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Studio</title>
+<style>
+
+@font-face {
+  font-family: 'Narrow';
+  src: url('Fonts/Arial Narrow.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: #fff;
+  font-family: 'Times New Roman', Times, serif;
+  color: #000;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Nav ── */
+#nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 64px;
+  background: #fff;
+  z-index: 200;
+}
+
+#nav-row {
+  position: absolute;
+  top: 26px;
+  left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 0 30px;
+  border-bottom: 1px solid #000;
+}
+
+.nl {
+  font-family: 'Narrow', 'Arial Narrow', Arial, sans-serif;
+  font-size: 22px;
+  font-style: normal;
+  color: #000;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 100px;
+  height: 37px;
+  border: 1px solid #000;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  background: #fff;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s;
+}
+.nl:hover { background: #0000ee; color: #fff; }
+.nl.active { border-bottom: 1px solid #fff; position: relative; z-index: 1; }
+
+/* ── Shared ── */
+section { scroll-margin-top: 63px; }
+
+/* ── Introduction ── */
+#introduction {
+  height: 822px;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  column-gap: 10px;
+  padding: 63px 10px 0;
+  align-items: center;
+}
+
+/* columns 2–11 = 10 columns */
+.intro-inner {
+  grid-column: 2 / 12;
+  display: flex;
+  flex-direction: column;
+  gap: 104px;
+}
+
+.intro-greeting {
+  font-size: 32px;
+  line-height: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 564px;
+}
+
+.intro-greeting .greeting-time { text-transform: uppercase; }
+
+.intro-wotd {
+  font-size: 32px;
+  line-height: 1.2;
+}
+
+.intro-wotd p {
+  text-indent: calc((100vw - 130px) / 12 + 10px);
+}
+
+.intro-wotd .wotd-quote {
+  text-indent: calc((100vw - 130px) / 12 + 10px - 14.4px);
+}
+
+.wotd-gap { display: block; height: 1.2em; }
+
+/* ── Clock section ── */
+#today {
+  position: relative;
+  height: 822px;
+}
+
+.clock-wrap {
+  position: absolute;
+  top: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.clock-wrap-la    { left: calc(25% - 111.5px); }
+.clock-wrap-nyc   { left: calc(50% - 111.5px); }
+.clock-wrap-paris { left: calc(75% - 111.5px); }
+
+.clock-city {
+  margin-top: 45px;
+  font-size: 32px;
+  text-align: center;
+  line-height: 1;
+}
+
+.clock-container {
+  position: relative;
+  width: 223px;
+  height: 223px;
+  flex-shrink: 0;
+}
+
+.clock-face {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid #000;
+}
+
+@property --c1x { syntax: '<percentage>'; initial-value: 50%; inherits: false; }
+@property --c1y { syntax: '<percentage>'; initial-value: 50%; inherits: false; }
+
+.clock-v1 {
+  background: transparent;
+  overflow: hidden;
+}
+
+.clock-face-inner-1 {
+  width: 100%;
+  height: 100%;
+  background: conic-gradient(
+    from -90deg at var(--c1x) var(--c1y),
+    #0000ee 0%,
+    #dd0000 25%,
+    #ff00cc 45%,
+    #ffee00 65%,
+    #fffde0 80%,
+    #0000ee 100%
+  );
+  animation: conic-drift 8s ease-in-out infinite alternate;
+}
+
+@keyframes conic-drift {
+  from { --c1x: 37%; --c1y: 37%; }
+  to   { --c1x: 63%; --c1y: 63%; }
+}
+
+.clock-v2 {
+  background: transparent;
+  overflow: hidden;
+  clip-path: circle(50%);
+}
+
+.clock-face-inner {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle farthest-side at 50% 15%,
+    #0000ee 0%,
+    #0000ee 5%,
+    #dd0000 40%,
+    #ff00cc 63%,
+    #ffee00 83%,
+    #fffde0 100%
+  );
+  transform-origin: center;
+  animation: size-morph 8s ease-in-out infinite;
+}
+
+@keyframes size-morph {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.65); }
+  100% { transform: scale(1); }
+}
+
+.clock-v3 {
+  background: transparent;
+  overflow: hidden;
+}
+
+.clock-face-inner-3 {
+  width: 100%;
+  height: 200%;
+  background: linear-gradient(to bottom,
+    #0000ee 0%,
+    #dd0000 25%,
+    #ff00cc 50%,
+    #ffee00 75%,
+    #fffde0 100%
+  );
+  animation: gradient-slide 7s ease-in-out infinite alternate;
+}
+
+@keyframes gradient-slide {
+  from { transform: translateY(0%); }
+  to   { transform: translateY(-50%); }
+}
+
+.clock-container canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 223px;
+  height: 223px;
+}
+
+#local-time {
+  position: absolute;
+  top: 570px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 32px;
+  line-height: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+#local-time .clock-label { text-transform: uppercase; }
+
+/* ── Placeholder sections ── */
+.placeholder {
+  min-height: 100vh;
+}
+
+/* ── Shared section grid ── */
+#overview, #calendar, #todo, #streetview, #news {
+  display: grid; grid-template-columns: repeat(12, 1fr);
+  column-gap: 10px; padding: 0 10px;
+  font-family: 'Times New Roman', Times, serif; color: #000;
+}
+#overview { min-height: 965px; align-items: stretch; }
+#calendar, #streetview { min-height: 822px; align-items: start; }
+#todo, #news { align-items: start; }
+
+.h32 { font-size: 32px; line-height: 32px; font-weight: 400; }
+.rule { border-top: 1px solid #8c8c8c; }
+.narrow { font-family: 'Narrow', 'Arial Narrow', Arial, sans-serif; font-size: 22px; line-height: 26px; }
+.blue-link { color: #0000ee; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.hover-add { color: #0000ee; opacity: 0; cursor: pointer; transition: opacity 0.15s; width: max-content; user-select: none; }
+.hover-add:hover { opacity: 1 !important; }
+.row-x {
+  position: absolute; left: -36px; top: 14px; font-family: Arial, sans-serif; font-size: 20px;
+  opacity: 0; cursor: pointer; user-select: none; transition: opacity 0.1s;
+}
+.row-x:hover { opacity: 1 !important; }
+
+/* ── Overview ── */
+.projects-left { grid-column: 1 / 6; background: #ff00cc; margin: 66px 0 61px; }
+.projects-right { grid-column: 7 / 13; padding: 65px 0 61px; }
+.projects-right:hover .hover-add { opacity: 0.35; }
+.week-label { margin-bottom: 57px; }
+
+.overview-row {
+  position: relative; padding: 10px 0 28px;
+  display: grid; grid-template-columns: 199px 1fr auto;
+}
+.overview-row:hover .row-x { opacity: 0.35; }
+.overview-title { grid-column: 1 / -1; outline: none; min-height: 32px; }
+.overview-time, .overview-cat, .overview-link { margin-top: 11px; outline: none; min-height: 26px; min-width: 20px; }
+.overview-link { justify-self: end; white-space: nowrap; }
+.overview-link::after { content: ' →'; }
+#add-event-btn { margin-top: 4px; }
+
+/* ── Calendar ── */
+#calendar { font-family: 'Times New Roman', Times, serif; }
+
+.cal-left {
+  grid-column: 2 / 5; align-self: stretch; position: relative;
+  padding-top: 63px; min-height: 822px;
+}
+.cal-right {
+  grid-column: 6 / 12; justify-self: end; margin-right: -10px;
+  width: calc((100vw - 130px) / 12 * 5.8);
+  padding-top: 212px;
+}
+
+.cal-title { font-size: 32px; line-height: 32px; font-weight: 400; color: #000; }
+
+#cal-events { margin-top: 76px; }
+
+.cal-event-item { border-top: 1px solid #a0a0a0; padding: 9px 0 13px; }
+
+.cal-event-name, .cal-event-time {
+  display: block; font-family: Arial, Helvetica, sans-serif;
+  font-size: 18px; line-height: 23px; color: #0000ee;
+  outline: none; cursor: text; min-height: 23px;
+}
+
+.cal-add {
+  font-family: Arial, Helvetica, sans-serif; font-size: 18px; line-height: 23px;
+  color: #0000ee; opacity: 0; cursor: pointer; transition: opacity 0.15s;
+  padding-top: 9px; width: max-content;
+}
+.cal-left:hover .cal-add { opacity: 0.35; }
+.cal-left .cal-add:hover { opacity: 1; }
+
+.cal-num {
+  position: absolute; left: 0; top: 434px;
+  font-size: 366px; line-height: 1; color: #0000ee; user-select: none; pointer-events: none;
+}
+
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
+
+.cal-day-name { font-size: 15px; line-height: 18px; color: #ccc; }
+
+.cal-day-cell {
+  font-size: 30px; line-height: 80px; color: #000; cursor: pointer;
+}
+.cal-day-cell.other-month { color: #aaa; }
+.cal-day-cell.selected { color: #0000ee; }
+
+.cal-months {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  font-size: 15px; line-height: 16px; text-align: center;
+}
+.cal-months button {
+  font: inherit; color: #ccc; background: none; border: none; padding: 0;
+  text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+  text-transform: uppercase; transition: color 0.15s;
+}
+.cal-months button:hover { color: #000; }
+#cal-prev { grid-column: 5; }
+#cal-next { grid-column: 6 / 8; justify-self: end; margin-right: 22px; }
+
+/* ── To Do ── */
+.todo-inner {
+  grid-column: 2 / 12; padding: 55px 0 59px;
+  container-type: inline-size; --col: calc((100cqw - 90px) / 10);
+}
+.todo-inner .h32 { line-height: 40px; }
+.todo-inner:hover .hover-add { opacity: 0.35; }
+#todo-list { margin-top: 48px; }
+
+.client-row {
+  position: relative; display: grid; align-items: baseline;
+  grid-template-columns: 178px 255px 1fr calc(4 * var(--col) + 30px) calc(var(--col) + 10px);
+  font-size: 30px; line-height: 36px; padding: 7px 0 32px; cursor: pointer; user-select: none;
+}
+.client-row.open { padding-bottom: 0; }
+.client-row:hover .row-x { opacity: 0.35; }
+.cl-name, .cl-number, .cl-desc { outline: none; cursor: text; user-select: text; min-height: 36px; }
+.cl-number, .cl-desc { font-style: italic; }
+.cl-desc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 10px; }
+.cl-toggle { justify-self: end; font-family: Arial, sans-serif; font-size: 22px; }
+
+.cl-tasks { display: none; position: relative; padding: 24px 0 28px; }
+.cl-tasks.open { display: block; }
+
+.cl-task { display: flex; align-items: flex-start; font-size: 30px; line-height: 47px; font-style: italic; }
+.cl-check {
+  width: 24px; height: 24px; flex-shrink: 0; margin: 10px 29px 0 0;
+  border: 1px solid #8c8c8c; cursor: pointer;
+}
+.cl-check.done { background: #000; border-color: #000; }
+.cl-task-text { flex: 1; min-width: 0; outline: none; word-break: break-word; transition: opacity 0.2s; }
+.cl-task.done .cl-task-text { text-decoration: line-through; opacity: 0.35; }
+.cl-tasks:not(.show-done) .cl-task.done:not(.just-done) { display: none; }
+.cl-add-task { position: absolute; left: 53px; bottom: 1px; }
+
+.todo-foot { display: flex; justify-content: space-between; align-items: baseline; margin-top: 26px; }
+.todo-foot .todo-more { position: absolute; left: 50%; transform: translateX(-50%); }
+.todo-foot { position: relative; min-height: 26px; }
+
+/* ── Street View ── */
+.sv-left { grid-column: 2 / 5; padding-top: 161px; }
+.sv-left .h32 { line-height: 39px; }
+.sv-map {
+  position: relative; height: 156px; margin-top: 172px; overflow: hidden; background: #eee;
+}
+.sv-map iframe {
+  position: absolute; top: -60px; left: 0; width: 100%; height: calc(100% + 120px);
+  border: 0; pointer-events: none;
+}
+.sv-controls {
+  display: flex; justify-content: space-evenly; align-items: center;
+  height: 68px; margin-top: 20px; border: 1px solid #6b6bff;
+}
+.sv-controls button {
+  background: none; border: 0; padding: 8px; cursor: pointer; display: flex; color: #0000ee;
+}
+.sv-controls button:hover { opacity: 0.5; }
+.sv-right {
+  grid-column: 5 / 12; margin-top: 166px; height: 489px; background: #eee; overflow: hidden;
+}
+.sv-right iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+/* ── News ── */
+.news-inner { grid-column: 3 / 13; margin-right: -10px; padding: 0 0 80px 16px; min-width: 0; }
+.news-group { padding-top: 70px; }
+.news-cards {
+  display: flex; gap: 20px; margin-top: 27px; padding-bottom: 62px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.news-cards::-webkit-scrollbar { display: none; }
+.news-card { flex: 0 0 514px; color: #000; text-decoration: none; display: block; }
+.news-img { width: 100%; background: #0000ee; display: block; }
+.news-img.empty { aspect-ratio: 4 / 3; }
+.news-img img { width: 100%; height: auto; max-height: 560px; object-fit: cover; display: block; }
+.news-img.team { aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; }
+.news-img.team img { width: 46%; height: auto; }
+.news-source { font-size: 30px; line-height: 28px; margin-top: 21px; text-transform: uppercase; }
+.news-title { font-size: 30px; line-height: 31.5px; }
+.news-card:hover .news-title { color: #0000ee; }
+.news-meta { font-family: Arial, Helvetica, sans-serif; font-size: 16px; line-height: 20px; margin-top: 23px; }
+.news-meta .author { color: #0000ee; }
+.news-score { text-transform: uppercase; }
+.news-loading { font-size: 30px; line-height: 32px; color: #aaa; }
+
+/* ── Grid overlay (press G to toggle) ── */
+#grid-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 999;
+  display: none;
+  padding: 0 10px;
+  gap: 10px;
+}
+#grid-overlay.visible {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+}
+#grid-overlay .gc {
+  background: rgba(255, 30, 30, 0.08);
+  height: 100%;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Grid overlay (press G to toggle) -->
+<div id="grid-overlay">
+  <div class="gc"></div><div class="gc"></div><div class="gc"></div><div class="gc"></div>
+  <div class="gc"></div><div class="gc"></div><div class="gc"></div><div class="gc"></div>
+  <div class="gc"></div><div class="gc"></div><div class="gc"></div><div class="gc"></div>
+</div>
+
+<!-- Nav -->
+<nav id="nav">
+  <div id="nav-row">
+    <a class="nl active" href="#introduction">Introduction</a>
+    <a class="nl" href="#today">Today</a>
+    <a class="nl" href="#overview">Overview</a>
+    <a class="nl" href="#calendar">Calendar</a>
+    <a class="nl" href="#todo">To Do</a>
+    <a class="nl" href="#streetview">Street View</a>
+    <a class="nl" href="#news">News</a>
+  </div>
+</nav>
+
+<!-- Introduction -->
+<section id="introduction">
+  <div class="intro-inner">
+
+    <div class="intro-greeting">
+      <p class="greeting-time" id="greeting">Good Afternoon</p>
+      <p id="weather-line">It is — degrees and —<br>in Brooklyn, NY</p>
+    </div>
+
+    <div class="intro-wotd">
+      <p>WORD OF THE DAY<br><span id="wotd-word"></span>: <span id="wotd-pron"></span> <span id="wotd-pos"></span></p>
+      <span class="wotd-gap"></span>
+      <p id="wotd-def"></p>
+      <span class="wotd-gap"></span>
+      <p class="wotd-quote" id="wotd-ex"></p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Clock -->
+<section id="today">
+  <div class="clock-wrap clock-wrap-la">
+    <div class="clock-container">
+      <div class="clock-face clock-v2">
+        <div class="clock-face-inner"></div>
+      </div>
+      <canvas id="clock-la" width="223" height="223"></canvas>
+    </div>
+    <p class="clock-city">LA</p>
+  </div>
+  <div class="clock-wrap clock-wrap-nyc">
+    <div class="clock-container">
+      <div class="clock-face clock-v1">
+        <div class="clock-face-inner-1"></div>
+      </div>
+      <canvas id="clock-nyc" width="223" height="223"></canvas>
+    </div>
+    <p class="clock-city">NYC</p>
+  </div>
+  <div class="clock-wrap clock-wrap-paris">
+    <div class="clock-container">
+      <div class="clock-face clock-v3">
+        <div class="clock-face-inner-3"></div>
+      </div>
+      <canvas id="clock-paris" width="223" height="223"></canvas>
+    </div>
+    <p class="clock-city">PARIS</p>
+  </div>
+  <div class="clock-text" id="local-time">
+    <p class="clock-label">TIME</p>
+    <p id="time-local"></p>
+    <p id="date-local"></p>
+  </div>
+</section>
+<!-- Overview -->
+<section id="overview">
+  <div class="projects-left"></div>
+  <div class="projects-right">
+    <p class="h32 week-label">OVERVIEW</p>
+    <div id="overview-list"></div>
+    <div class="narrow hover-add" id="add-event-btn">+ Add event</div>
+  </div>
+</section>
+
+<!-- Calendar -->
+<section id="calendar">
+  <div class="cal-left">
+    <p class="cal-title">CALENDAR</p>
+    <p class="cal-title" id="cal-day-str"></p>
+    <div id="cal-events"></div>
+    <div class="cal-add" id="cal-add">+ Add event</div>
+    <div class="cal-num" id="cal-big-date"></div>
+  </div>
+  <div class="cal-right">
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="cal-months">
+      <button id="cal-prev"></button>
+      <button id="cal-next"></button>
+    </div>
+  </div>
+</section>
+
+<!-- To Do -->
+<section id="todo">
+  <div class="todo-inner">
+    <p class="h32">FREELANCE</p>
+    <p class="h32">Projects</p>
+    <div id="todo-list"></div>
+    <div class="todo-foot narrow">
+      <span class="hover-add" id="todo-add-project-btn">+ Add project</span>
+      <span class="blue-link todo-more" id="todo-more">View More →</span>
+    </div>
+  </div>
+</section>
+
+<!-- Street View -->
+<section id="streetview">
+  <div class="sv-left">
+    <p class="h32">STREET VIEW</p>
+    <p class="h32" id="sv-location-name">Spring Street</p>
+    <div class="sv-map" id="sv-minimap"></div>
+    <div class="sv-controls">
+      <button id="sv-minus" aria-label="Zoom out"><svg width="30" height="30" viewBox="0 0 30 30"><path d="M2 15h26" stroke="currentColor" stroke-width="4"/></svg></button>
+      <button id="sv-plus" aria-label="Zoom in"><svg width="30" height="30" viewBox="0 0 30 30"><path d="M2 15h26M15 2v26" stroke="currentColor" stroke-width="4"/></svg></button>
+      <button id="sv-up" aria-label="Look up"><svg width="26" height="24" viewBox="0 0 26 24"><path d="M13 2 25 22H1Z" fill="currentColor"/></svg></button>
+      <button id="sv-down" aria-label="Look down"><svg width="26" height="24" viewBox="0 0 26 24"><path d="M13 22 25 2H1Z" fill="none" stroke="#8a8aff" stroke-width="1.5"/></svg></button>
+    </div>
+  </div>
+  <div class="sv-right" id="sv-pano"></div>
+</section>
+
+<!-- News -->
+<section id="news">
+  <div class="news-inner" id="news-feed"></div>
+</section>
+
+<script>
+
+/* ── Store: saves to data/store.json via server.js, falls back to localStorage ──
+   Keys are permanent; change data shapes by migrating in place, never by renaming a key. */
+const Store = (() => {
+  let server = null;
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', '/api/store', false);
+    xhr.send();
+    if (xhr.status === 200) server = JSON.parse(xhr.responseText);
+  } catch (e) {}
+
+  function readLocal(key) {
+    try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
+  }
+
+  // Saves go out one at a time so an older save can never land after a newer one.
+  let queue = Promise.resolve();
+  const pending = new Map();
+  function push(key, value) {
+    const queued = pending.has(key);
+    pending.set(key, value);
+    if (queued) return;
+    queue = queue.then(() => {
+      const body = JSON.stringify(pending.get(key));
+      pending.delete(key);
+      return fetch('/api/store/' + encodeURIComponent(key), {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body, keepalive: body.length < 60000,
+      });
+    }).catch(() => {});
+  }
+
+  function get(key) {
+    if (server && key in server) return server[key];
+    const local = readLocal(key);
+    if (server && local != null) { server[key] = local; push(key, local); }
+    return local;
+  }
+
+  function set(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+    if (server) { server[key] = value; push(key, value); }
+  }
+
+  return { get, set };
+})();
+
+/* ── Greeting ── */
+function updateGreeting() {
+  const h = new Date().getHours();
+  const g = h < 12 ? 'Good Morning' : h < 18 ? 'Good Afternoon' : h < 21 ? 'Good Evening' : 'Good Night';
+  document.getElementById('greeting').textContent = g;
+}
+updateGreeting();
+
+/* ── Weather ── */
+const WMO = {
+  0:'Clear',1:'Mostly Clear',2:'Partly Cloudy',3:'Overcast',
+  45:'Foggy',48:'Icy Fog',
+  51:'Light Drizzle',53:'Drizzle',55:'Heavy Drizzle',
+  61:'Light Rain',63:'Rainy',65:'Heavy Rain',
+  71:'Light Snow',73:'Snowy',75:'Heavy Snow',
+  80:'Showers',81:'Showers',82:'Heavy Showers',
+  95:'Thunderstorms',96:'Stormy',99:'Heavy Storms'
+};
+
+async function loadWeather() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(async ({ coords: { latitude: lat, longitude: lng } }) => {
+    try {
+      const [geoRes, wxRes] = await Promise.all([
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`),
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weathercode&temperature_unit=fahrenheit`)
+      ]);
+      const geo = await geoRes.json();
+      const wx  = await wxRes.json();
+      const addr = geo.address || {};
+      const neighborhood = addr.neighbourhood || addr.suburb || addr.city_district || addr.quarter || '';
+      const city  = addr.city || addr.town || addr.village || '';
+      const state = addr.state_code || addr.state || '';
+      const place = neighborhood ? `${neighborhood}, ${state}` : `${city}, ${state}`;
+      const temp  = Math.round(wx.current.temperature_2m);
+      const desc  = WMO[wx.current.weathercode] ?? 'Partly Cloudy';
+      document.getElementById('weather-line').innerHTML =
+        `It is ${temp} degrees and ${desc}<br>in ${place}`;
+    } catch (e) {}
+  }, () => {});
+}
+loadWeather();
+
+/* ── Word of the Day ── */
+const WORDS = [
+  { word:'liminal',     pron:'lim·i·nal /ˈlimənl/',           pos:'adjective',
+    def:'Relating to a transitional or initial stage; occupying a position at or on both sides of a boundary or threshold. Situated at a sensory threshold — barely perceptible, or capable of eliciting a response only with effort. It is the territory of transformation: the door that is neither open nor closed, the season that is neither one thing nor the next.',
+    ex:'"The most interesting work tends to occupy liminal territory — not quite one thing or another, resisting easy classification. It belongs to the space between categories, and that is precisely where its power lives."' },
+  { word:'petrichor',   pron:'pet·ri·chor /ˈpetrəˌkôr/',      pos:'noun',
+    def:'The pleasant, earthy scent produced when rain falls on dry soil. A fragrance that rises from the ground after drought, recalling something ancient and half-remembered. Scientists call the compound geosmin — but the word petrichor carries more of what it actually feels like to smell it.',
+    ex:'"The petrichor after the storm was so strong it felt less like a smell than a weather condition all its own — the kind of thing that makes you stop walking and just stand in it for a moment."' },
+  { word:'palimpsest',  pron:'pal·imp·sest /ˈpalimpsest/',     pos:'noun',
+    def:'A manuscript bearing traces of earlier writing that was imperfectly erased. More broadly, any object or place layered with visible signs of its own history. The past doesn\'t disappear — it becomes substrate, present in the texture of everything built on top of it.',
+    ex:'"Every city is a palimpsest — new buildings overlay the old, but the old streets still determine where you walk. You are always moving through at least two cities at once."' },
+  { word:'sonder',      pron:'son·der /ˈsändər/',               pos:'noun',
+    def:'The sudden realization that each passerby has a life as vivid and complex as your own — complete with its own ambitions, routines, and quiet worries running in parallel. The word was coined by John Koenig, and promptly became indispensable for describing something everyone has felt but few had named.',
+    ex:'"A moment of sonder struck her at the airport: all these strangers, all these entire lives, all in motion at once. The feeling was vertiginous — a sudden awareness of the sheer weight of other people\'s interiority."' },
+  { word:'numinous',    pron:'nu·mi·nous /ˈn(y)o͞omənəs/',     pos:'adjective',
+    def:'Having a strong sense of the supernatural or mysterious; evoking spiritual awe. Suggesting the presence of something beyond the reach of ordinary experience. Rudolf Otto used the word to describe what religion actually feels like, as opposed to what it argues.',
+    ex:'"The gallery at closing had a numinous quality — as though the work on the walls had begun watching back. It was the kind of attention you couldn\'t ignore and couldn\'t explain."' },
+  { word:'apophenia',   pron:'ap·o·phe·ni·a /ˌapəˈfēnēə/',    pos:'noun',
+    def:'The tendency to perceive meaningful connections between unrelated things; to find patterns where none were intended or exist. First described clinically, it has since escaped into general use — perhaps because it describes something most of us do constantly, and not always wrongly.',
+    ex:'"Designers are prone to apophenia — once you learn to see grids, you start finding them everywhere. The danger isn\'t the pattern; it\'s mistaking your projection for discovery."' },
+  { word:'bricolage',   pron:'bri·co·lage /ˌbrēkōˈläZH/',     pos:'noun',
+    def:'Construction or creation from whatever materials happen to be at hand; work produced through improvisation and the ingenious repurposing of available means. Lévi-Strauss introduced the concept to describe a mode of thinking that works through the concrete rather than from abstract principles down.',
+    ex:'"Her practice was pure bricolage — found objects, borrowed forms, and ideas from disciplines she barely understood. The constraint wasn\'t a limitation; it was the whole method."' },
+  { word:'terroir',     pron:'ter·roir /teˈrwär/',              pos:'noun',
+    def:'The complete natural environment — soil, topography, climate — that gives a wine or crop its distinct character. The taste, in other words, of a particular place. The concept has since spread from winemaking to architecture, cuisine, and any practice where origin and character cannot be separated.',
+    ex:'"The word terroir resists translation; it implies that place is not background but ingredient. You can replicate the technique, but you cannot replicate the ground beneath it."' },
+  { word:'flâneur',     pron:'flâ·neur /fläˈnər/',              pos:'noun',
+    def:'One who wanders city streets without a fixed destination, observing the spectacle of urban life with deliberate, unhurried curiosity. The flâneur belongs to a tradition running from Baudelaire through Walter Benjamin — philosophy practiced at walking pace, with no agenda but attention.',
+    ex:'"To be a flâneur is not to be lost — it is to move through a city convinced that observation is its own purpose. The goal is to be moved by what you find, not to find what you came looking for."' },
+  { word:'penumbra',    pron:'pe·num·bra /pəˈnəmbrə/',         pos:'noun',
+    def:'The partial shadow at the outer edge of a full shadow; the region between complete illumination and total darkness. Also: any peripheral zone of uncertainty or ambiguity. In legal usage, the penumbra names the implied — the meaning that is present, but only by inference.',
+    ex:'"The design lived in the penumbra between product and art — neither category quite willing to claim it. It was most interesting precisely where it was hardest to name."' },
+  { word:'lacuna',      pron:'la·cu·na /ləˈkyo͞onə/',           pos:'noun',
+    def:'A gap or missing portion, especially in a manuscript, text, or argument. An unfilled space or interval that draws attention by its very absence. Lacunae are often more structurally important than the parts they interrupt — the absence shapes everything around it.',
+    ex:'"The lacuna in the archive was itself a kind of document — an absence that told you exactly what had been taken. Someone had known which pages mattered enough to remove."' },
+  { word:'ephemeral',   pron:'e·phem·er·al /əˈfem(ə)rəl/',    pos:'adjective',
+    def:'Lasting for only a short time; transitory. Often used to describe moments of beauty or experience that vanish before they can be fully grasped. The ephemerality of something doesn\'t diminish its significance — it may be precisely what concentrates it.',
+    ex:'"The best moments in a city are ephemeral — a particular light on a familiar wall, never quite the same twice. The experience is unrepeatable, which is another way of saying it belongs entirely to the instant you noticed it."' },
+  { word:'atelier',     pron:'a·te·lier /ˌatəlˈyā/',           pos:'noun',
+    def:'An artist\'s or designer\'s studio or workshop; a place of making. Also a training system based on close apprenticeship and practice over formal instruction. The word carries more gravity than studio — it implies tradition, rigor, and the idea that craft is transmitted person to person rather than taught in the abstract.',
+    ex:'"The atelier wasn\'t a beautiful space — it was utilitarian and obsessive, organized entirely around the work. Everything else — the light, the hours, the temperature — had been negotiated in the work\'s favor."' },
+  { word:'gestalt',     pron:'ge·stalt /ɡəˈSHtält/',           pos:'noun',
+    def:'A configuration or pattern of elements so unified as a whole that it cannot be described merely as a sum of its parts. The whole that exceeds its own inventory. Gestalt psychology proposed this as a fundamental principle of perception — we see wholes before we see parts, and the relationship between things before the things themselves.',
+    ex:'"You could critique every individual element and still miss the gestalt — what the whole room produced together. It was the relationship between things that mattered, not the inventory of what was there."' },
+  { word:'patina',      pron:'pat·i·na /ˈpadənə/',              pos:'noun',
+    def:'A surface sheen or coloring that develops through age, use, or exposure. The visible accumulation of time on an object; quality that cannot be applied, only acquired. To fake a patina is to produce its exact opposite — a surface that announces its own inauthenticity.',
+    ex:'"The table had a patina you couldn\'t buy — forty years of dinners and repairs embedded in the grain. Every scratch was an event; the surface was a record."' },
+  { word:'telos',       pron:'te·los /ˈtēläs/',                 pos:'noun',
+    def:'The ultimate purpose or aim of a thing; the end toward which something strives, especially in Aristotelian philosophy. The goal that gives form its meaning. Without telos, activity becomes mere motion — effective, perhaps efficient, but not pointed at anything.',
+    ex:'"Design without a clear telos becomes decoration — technically proficient but fundamentally aimless. The question isn\'t what it looks like; it\'s what it is for."' },
+  { word:'chiaroscuro', pron:'chi·a·ro·scu·ro /kēˌärəˈsk(y)o͝orō/', pos:'noun',
+    def:'The treatment of light and shadow in visual art; the use of strong contrasts between illuminated and dark areas to create volume, drama, and depth. Mastered by Caravaggio and Rembrandt, it became a model not just for painting but for any art that works through contrast rather than description.',
+    ex:'"The photographer worked in chiaroscuro — a face half-lit, a figure half-absorbed by the surrounding dark. The shadow was not absence; it was the other half of the description."' },
+  { word:'saudade',     pron:'sau·da·de /ˌsoudˈädə/',           pos:'noun',
+    def:'A deep emotional state of nostalgic longing for something beloved and absent — a person, a place, a feeling — that may never return. The Portuguese have built an entire aesthetic tradition around it, finding beauty not despite the loss but inside it.',
+    ex:'"Saudade is the particular sadness of hearing a song that will never take you back to where you first heard it. It is the knowledge that even the memory is already fading — and that knowing somehow makes it more vivid, not less."' },
+  { word:'aporia',      pron:'a·po·ri·a /əˈpôrēə/',            pos:'noun',
+    def:'A state of irresolvable uncertainty or internal contradiction; a rhetorical acknowledgment that a question has no clean answer — only navigation. Socrates used aporia not as failure but as method: the pause in which real thinking begins.',
+    ex:'"Every strong design problem contains an aporia at its center — the tension that can\'t be resolved, only worked around. The skill is learning to build well precisely where the ground won\'t hold still."' },
+  { word:'simulacrum',  pron:'sim·u·la·crum /ˌsimyəˈlākrəm/', pos:'noun',
+    def:'A copy of something whose original has been lost, distorted, or may never have existed. A representation that stands in for — and may eventually displace — the real. Baudrillard argued that in contemporary culture the simulacrum has precedence: we live among copies of things that never existed.',
+    ex:'"The renovation produced a simulacrum of the original building — identical surfaces, but without the weight. The materials were correct; the history had been removed."' },
+  { word:'vernacular',  pron:'ver·nac·u·lar /vərˈnakyələr/',   pos:'noun',
+    def:'The everyday language or design idiom of a particular region or community, developed outside formal training. The built and spoken expression of ordinary life. Venturi and Scott Brown argued that architects had everything to learn from it — the vernacular was honest in a way that high style rarely managed to be.',
+    ex:'"The vernacular of the neighborhood — fire escapes, stoop chairs, hand-painted signs — was more alive than anything the architects had planned. It had been designed by use, not by intention."' },
+  { word:'entropy',     pron:'en·tro·py /ˈentrəpē/',           pos:'noun',
+    def:'A measure of disorder in a closed system; the tendency of all organized things to move gradually and irreversibly toward disorder over time. The second law of thermodynamics states it as fact; every act of maintenance is a small argument made against it.',
+    ex:'"Every studio has its own entropy — the slow accumulation of half-finished things pulling everything toward chaos. The real discipline isn\'t starting; it\'s refusing to let the entropy win before you\'re done."' },
+  { word:'zeitgeist',   pron:'zeit·geist /ˈtsītˌɡīst/',        pos:'noun',
+    def:'The defining spirit or mood of a particular period in history, as expressed through its prevailing ideas, attitudes, and cultural production. Hegel used the term to describe history as something that moves through collective consciousness — and leaves a style behind as evidence.',
+    ex:'"The best work doesn\'t chase the zeitgeist — it identifies the thing the zeitgeist is reaching for but can\'t quite name. It arrives a little ahead of what everyone is about to want."' },
+  { word:'mise-en-scène', pron:'mi·se-en-scène /mēz ɑ̃ ˈsen/', pos:'noun',
+    def:'The total arrangement of everything visible within a frame or scene; the complete visual environment that a director or designer constructs for the eye to inhabit. In film theory it distinguishes what is in the image from how it got there — intention encoded in every visible detail.',
+    ex:'"The room was entirely designed — every object placed, no accident allowed. It was a mise-en-scène rather than a home: beautiful in the way that something controlled is beautiful, and slightly exhausting for the same reason."' },
+  { word:'kenosis',     pron:'ke·no·sis /kəˈnōsəs/',           pos:'noun',
+    def:'An act of emptying out; the voluntary relinquishment of attributes or control in order to make space for something that could not otherwise enter. In theology it describes self-emptying; in creative practice it describes the discipline of getting yourself out of the way of the work.',
+    ex:'"The best revision is a kind of kenosis — you have to be willing to empty the work before you can fill it rightly. The hardest part is trusting that what you remove is making room for something better."' },
+  { word:'wabi-sabi',   pron:'wa·bi-sa·bi /ˌwäbē ˈsäbē/',     pos:'noun',
+    def:'A Japanese aesthetic philosophy centered on the acceptance of imperfection, impermanence, and incompleteness as the primary conditions of beauty. Where Western aesthetics often seeks the ideal form, wabi-sabi finds the ideal in the trace of time, the asymmetry, the unfinished edge.',
+    ex:'"The cracked glaze, the uneven rim — wabi-sabi is the art of letting the material keep its own history. The flaw is not a failure of the object; it is the object becoming more fully itself."' },
+  { word:'synaesthesia', pron:'syn·aes·the·sia /ˌsinisˈTHēZHə/', pos:'noun',
+    def:'A condition in which stimulation of one sense automatically produces an experience in another — hearing color, tasting shapes, seeing sound.',
+    ex:'"For her, every typeface had a texture she could feel against her hand — typography was always also synaesthesia."' },
+  { word:'bricoleur',   pron:'bri·co·leur /ˌbrēkōˈlər/',       pos:'noun',
+    def:'A person who creates things from whatever is available; a maker who works fluidly across disciplines and categories without fixed method or material.',
+    ex:'"She was a bricoleur by temperament — her studio held materials from six different practices, all in slow conversation."' },
+  { word:'palimpsest',  pron:'pal·imp·sest /ˈpalimpsest/',     pos:'noun',
+    def:'A surface on which earlier writing or marks persist beneath newer ones. Any accumulation of overlapping histories made partially visible by time.',
+    ex:'"The wall behind the shelves was a palimpsest of forty years of paint colors, each one visible at the edges."' },
+  { word:'terroir',     pron:'ter·roir /teˈrwär/',              pos:'noun',
+    def:'The specific combination of soil, slope, climate, and microclimate that gives a place — and whatever grows in it — its unrepeatable character.',
+    ex:'"Every neighborhood has a terroir. You taste it in the water, smell it in the air, feel it in how the light comes through."' },
+];
+
+(function setWord() {
+  const day  = Math.floor(Date.now() / 86400000);
+  const w    = WORDS[day % WORDS.length];
+  document.getElementById('wotd-word').textContent = w.word;
+  document.getElementById('wotd-pron').textContent = w.pron;
+  document.getElementById('wotd-pos').textContent  = w.pos;
+  document.getElementById('wotd-def').textContent  = w.def;
+  document.getElementById('wotd-ex').textContent   = w.ex;
+})();
+
+/* ── Clock ── */
+(function initClocks() {
+  const SIZE = 223, cx = SIZE/2, cy = SIZE/2, R = SIZE/2;
+  const pad = n => String(n).padStart(2, '0');
+
+  function getTimeParts(tz) {
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false
+    }).formatToParts(now);
+    const get = t => parts.find(p => p.type === t)?.value || '';
+    return {
+      h: parseInt(get('hour')) % 24,
+      m: parseInt(get('minute')),
+      s: parseInt(get('second')),
+      ms: now.getMilliseconds(),
+      weekday: get('weekday'),
+      month: get('month'),
+      day: parseInt(get('day')),
+      year: parseInt(get('year'))
+    };
+  }
+
+  function drawHand(ctx, angle, length, lineWidth, dash, arrowLen) {
+    const tx = cx + Math.sin(angle) * length;
+    const ty = cy - Math.cos(angle) * length;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(tx, ty);
+    ctx.strokeStyle = '#000'; ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round'; ctx.setLineDash(dash); ctx.stroke();
+    const sp = Math.PI * 0.33;
+    ctx.setLineDash([]); ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(tx - arrowLen * Math.sin(angle - sp), ty + arrowLen * Math.cos(angle - sp));
+    ctx.lineTo(tx, ty);
+    ctx.lineTo(tx - arrowLen * Math.sin(angle + sp), ty + arrowLen * Math.cos(angle + sp));
+    ctx.stroke();
+  }
+
+  function startClock(canvasId, tz) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    function tick() {
+      const { h, m, s, ms } = getTimeParts(tz);
+      const secA  = ((s + ms/1000) / 60) * Math.PI * 2;
+      const minA  = ((m + (s + ms/1000)/60) / 60) * Math.PI * 2;
+      const hourA = ((h % 12 + m/60 + s/3600) / 12) * Math.PI * 2;
+      ctx.clearRect(0, 0, SIZE, SIZE);
+      drawHand(ctx, secA,  R * 0.82, 1.5, [0, 5],  5);
+      drawHand(ctx, minA,  R * 0.72, 2,   [0, 6],  7);
+      drawHand(ctx, hourA, R * 0.52, 2.5, [0, 7],  8);
+      requestAnimationFrame(tick);
+    }
+    tick();
+  }
+
+  function startLocalTime() {
+    function tick() {
+      const now = new Date();
+      const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+      const h12 = h % 12 || 12;
+      document.getElementById('time-local').textContent =
+        `It is ${h12}:${pad(m)}:${pad(s)} ${h < 12 ? 'AM' : 'PM'}`;
+      const { weekday, month, day, year } = getTimeParts(Intl.DateTimeFormat().resolvedOptions().timeZone);
+      document.getElementById('date-local').textContent =
+        `${weekday} ${month} ${day}, ${year}`;
+      setTimeout(tick, 1000);
+    }
+    tick();
+  }
+
+  startClock('clock-la',    'America/Los_Angeles');
+  startClock('clock-nyc',   'America/New_York');
+  startClock('clock-paris', 'Europe/Paris');
+  startLocalTime();
+})();
+
+/* ── Overview ── */
+(function initOverview() {
+  const KEY = 'studio-overview-v2';
+  const DEFAULT = [
+    { id:'e1', title:'Variant Checkin with Christian', time:'02:00 –  02:30 PM', category:'Composite',   link:'Google Meet' },
+    { id:'e2', title:'BCI Weekly Review',              time:'02:00 –  02:30 PM', category:'V+V',         link:'Google Meet' },
+    { id:'e3', title:'Love Island',                    time:'09:00 –  10:30 PM', category:'Personal',    link:'Peacock' },
+    { id:'e4', title:'Daily Web/Prompt Review',        time:'07:00 –  09:30 PM', category:'Naman Nanda', link:'Google Meet' },
+    { id:'e5', title:'Drinks With Tyler + Tristan',    time:'07:00 –  09:30 PM', category:'Personal',    link:'Cookies' },
+    { id:'e6', title:'Variant Updates',                time:'07:00 –  09:30 PM', category:'Composite',   link:'Design' },
+  ];
+
+  let events = Store.get(KEY);
+  if (!Array.isArray(events)) events = DEFAULT;
+
+  function save() { Store.set(KEY, events); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+  function field(tag, cls, ev, key) {
+    const el = document.createElement(tag);
+    el.className = cls;
+    el.contentEditable = 'plaintext-only';
+    el.textContent = ev[key];
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+    el.addEventListener('blur', () => { ev[key] = el.textContent.trim(); save(); });
+    return el;
+  }
+
+  function render() {
+    const list = document.getElementById('overview-list');
+    list.innerHTML = '';
+
+    events.forEach((ev, i) => {
+      const row = document.createElement('div');
+      row.className = 'overview-row rule';
+
+      const del = document.createElement('span');
+      del.className = 'row-x';
+      del.textContent = '×';
+      del.addEventListener('click', () => { events.splice(i, 1); save(); render(); });
+
+      row.append(
+        del,
+        field('div', 'h32 overview-title', ev, 'title'),
+        field('span', 'narrow overview-time', ev, 'time'),
+        field('span', 'narrow overview-cat', ev, 'category'),
+        field('span', 'narrow blue-link overview-link', ev, 'link'),
+      );
+      list.appendChild(row);
+    });
+  }
+
+  document.getElementById('add-event-btn').addEventListener('click', () => {
+    events.push({ id:uid(), title:'', time:'', category:'', link:'' });
+    save(); render();
+    const titles = document.querySelectorAll('.overview-title');
+    titles[titles.length - 1].focus();
+  });
+
+  render();
+})();
+
+/* ── Calendar ── */
+(function initCalendar() {
+  const KEY = 'studio-cal-events-v2';
+  const WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const pad = n => String(n).padStart(2, '0');
+
+  const now = new Date();
+  let selected = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let viewYear = selected.getFullYear();
+  let viewMonth = selected.getMonth();
+
+  let calEvents = Store.get(KEY);
+  if (!Array.isArray(calEvents)) {
+    const t = iso(selected);
+    calEvents = [
+      { id:'e1', date:t, name:'Therapy',  time:'09:00AM' },
+      { id:'e2', date:t, name:'Pharmacy', time:'10:00PM' },
+      { id:'e3', date:t, name:'Lunch',    time:'12:00PM' },
+    ];
+  }
+
+  function save() { Store.set(KEY, calEvents); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+  function editable(cls, ev, field, onEnter) {
+    const el = document.createElement('span');
+    el.className = cls;
+    el.contentEditable = 'plaintext-only';
+    el.textContent = ev[field];
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); onEnter(el); } });
+    el.addEventListener('blur', () => {
+      ev[field] = el.textContent.trim();
+      if (!ev.name && !ev.time) calEvents = calEvents.filter(x => x !== ev);
+      save();
+      setTimeout(() => { if (!document.querySelector('#cal-events :focus')) renderLeft(); }, 0);
+    });
+    return el;
+  }
+
+  function renderLeft() {
+    document.getElementById('cal-day-str').textContent = WEEKDAYS[selected.getDay()] + ', ' + MONTHS[selected.getMonth()];
+    document.getElementById('cal-big-date').textContent = selected.getDate();
+
+    const container = document.getElementById('cal-events');
+    container.innerHTML = '';
+    calEvents.filter(ev => ev.date === iso(selected)).forEach(ev => {
+      const item = document.createElement('div');
+      item.className = 'cal-event-item';
+      const timeEl = editable('cal-event-time', ev, 'time', el => el.blur());
+      const nameEl = editable('cal-event-name', ev, 'name', () => timeEl.focus());
+      item.append(nameEl, timeEl);
+      container.appendChild(item);
+    });
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById('cal-grid');
+    grid.innerHTML = '';
+
+    ['S','M','T','W','T','F','S'].forEach(d => {
+      const h = document.createElement('div');
+      h.className = 'cal-day-name'; h.textContent = d; grid.appendChild(h);
+    });
+
+    const start = new Date(viewYear, viewMonth, 1 - new Date(viewYear, viewMonth, 1).getDay());
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+      const c = document.createElement('div');
+      c.className = 'cal-day-cell';
+      if (d.getMonth() !== viewMonth) c.classList.add('other-month');
+      if (iso(d) === iso(selected)) c.classList.add('selected');
+      c.textContent = pad(d.getDate());
+      c.addEventListener('click', () => select(d));
+      grid.appendChild(c);
+    }
+
+    document.getElementById('cal-prev').textContent = MONTHS[(viewMonth + 11) % 12];
+    document.getElementById('cal-next').textContent = MONTHS[(viewMonth + 1) % 12];
+  }
+
+  function select(d) {
+    selected = d;
+    viewYear = d.getFullYear();
+    viewMonth = d.getMonth();
+    renderLeft();
+    renderGrid();
+  }
+
+  function goMonth(delta) {
+    const target = new Date(viewYear, viewMonth + delta, 1);
+    const isCurrent = target.getFullYear() === now.getFullYear() && target.getMonth() === now.getMonth();
+    select(isCurrent ? new Date(now.getFullYear(), now.getMonth(), now.getDate()) : target);
+  }
+
+  document.getElementById('cal-prev').addEventListener('click', () => goMonth(-1));
+  document.getElementById('cal-next').addEventListener('click', () => goMonth(1));
+
+  document.getElementById('cal-add').addEventListener('click', () => {
+    const ev = { id:uid(), date:iso(selected), name:'', time:'' };
+    calEvents.push(ev);
+    renderLeft();
+    const names = document.querySelectorAll('#cal-events .cal-event-name');
+    names[names.length - 1].focus();
+  });
+
+  renderLeft();
+  renderGrid();
+})();
+
+/* ── To Do ── */
+(function initTodo() {
+  const KEY = 'studio-todo-v2';
+  const VISIBLE = 3;
+  const t = text => ({ id: Math.random().toString(36).slice(2, 9), text, done: false });
+  const DEFAULT = [
+    { id:'c1', name:'MoMS', number:'#2609', desc:'Web Design, Art Direction, Branding', expanded:true, tasks:[
+      'Staging Setup', 'Navigation Design', 'Product pages on user’s collection pages', 'Show on museum that way',
+      'Add likes', 'Ability to add IG', 'More of a profile page and at the top',
+      'On collection backend Image view make it easier to edit info other than images', 'Reorder by dragging also',
+      'Figure out how to log decks better . Even for setups to make the in use better.', 'Fix filter',
+      'Add brand pages', 'Donate to the hosting and other fees', 'Add About page',
+      'Add Homepage with setups, recent releases',
+    ].map(t) },
+    { id:'c2', name:'NEVS', number:'#2608', desc:'Web Design, Art Direction, Branding', expanded:false, tasks:[] },
+    { id:'c3', name:'Naman Nanda', number:'#2607', desc:'Web Design, Strategy, Layout Design', expanded:false, tasks:[] },
+  ];
+
+  let projects = Store.get(KEY);
+  if (!Array.isArray(projects)) projects = DEFAULT;
+  let showMore = false;
+  let focusRequest = null;
+
+  function save() { Store.set(KEY, projects); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function focusTail(el) {
+    el.focus();
+    const r = document.createRange(); r.selectNodeContents(el); r.collapse(false);
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+
+  function rowField(cls, project, key) {
+    const el = document.createElement('span');
+    el.className = cls;
+    el.contentEditable = 'plaintext-only';
+    el.textContent = project[key];
+    el.addEventListener('click', e => e.stopPropagation());
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+    el.addEventListener('blur', () => { project[key] = el.textContent.trim(); save(); });
+    return el;
+  }
+
+  function render() {
+    const list = document.getElementById('todo-list');
+    list.innerHTML = '';
+    const shown = showMore ? projects : projects.slice(0, VISIBLE);
+
+    shown.forEach((project, pi) => {
+      const row = document.createElement('div');
+      row.className = 'client-row rule' + (project.expanded ? ' open' : '');
+
+      const del = document.createElement('span');
+      del.className = 'row-x';
+      del.textContent = '×';
+      del.addEventListener('click', e => { e.stopPropagation(); projects.splice(pi, 1); save(); render(); });
+
+      const label = document.createElement('span');
+      label.textContent = 'CLIENT';
+
+      const toggle = document.createElement('span');
+      toggle.className = 'cl-toggle';
+      toggle.textContent = project.expanded ? '×' : '+';
+
+      row.append(del, label,
+        rowField('cl-name', project, 'name'),
+        rowField('cl-number', project, 'number'),
+        rowField('cl-desc', project, 'desc'),
+        toggle);
+      row.addEventListener('click', () => { project.expanded = !project.expanded; save(); render(); });
+      list.appendChild(row);
+
+      const tasksEl = document.createElement('div');
+      tasksEl.className = 'cl-tasks' + (project.expanded ? ' open' : '') + (showMore ? ' show-done' : '');
+
+      project.tasks.forEach((task, ti) => {
+        const taskRow = document.createElement('div');
+        taskRow.className = 'cl-task' + (task.done ? ' done' : '');
+
+        const check = document.createElement('div');
+        check.className = 'cl-check' + (task.done ? ' done' : '');
+
+        const textEl = document.createElement('div');
+        textEl.className = 'cl-task-text';
+        textEl.contentEditable = 'plaintext-only';
+        textEl.textContent = task.text;
+
+        check.addEventListener('click', () => {
+          task.done = !task.done; save();
+          check.classList.toggle('done', task.done);
+          taskRow.classList.toggle('done', task.done);
+          taskRow.classList.add('just-done');
+          setTimeout(() => taskRow.classList.remove('just-done'), 900);
+        });
+
+        textEl.addEventListener('blur', () => { task.text = textEl.textContent; save(); });
+        textEl.addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            task.text = textEl.textContent;
+            project.tasks.splice(ti + 1, 0, { id:uid(), text:'', done:false });
+            focusRequest = { id: project.id, ti: ti + 1 };
+            save(); render();
+          } else if (e.key === 'Backspace' && !textEl.textContent) {
+            e.preventDefault();
+            project.tasks.splice(ti, 1);
+            focusRequest = { id: project.id, ti: Math.max(0, ti - 1) };
+            save(); render();
+          }
+        });
+
+        taskRow.append(check, textEl);
+        tasksEl.appendChild(taskRow);
+
+        if (focusRequest && focusRequest.id === project.id && focusRequest.ti === ti) {
+          focusRequest = null;
+          setTimeout(() => focusTail(textEl), 0);
+        }
+      });
+
+      const addTask = document.createElement('div');
+      addTask.className = 'cl-add-task narrow hover-add';
+      addTask.textContent = '+ Add task';
+      addTask.addEventListener('click', () => {
+        project.tasks.push({ id:uid(), text:'', done:false });
+        focusRequest = { id: project.id, ti: project.tasks.length - 1 };
+        save(); render();
+      });
+      tasksEl.appendChild(addTask);
+
+      list.appendChild(tasksEl);
+    });
+
+    document.getElementById('todo-more').textContent = showMore ? 'View Less →' : 'View More →';
+  }
+
+  document.getElementById('todo-more').addEventListener('click', () => { showMore = !showMore; render(); });
+
+  document.getElementById('todo-add-project-btn').addEventListener('click', () => {
+    projects.push({ id:uid(), name:'New Client', number:'#0000', desc:'', expanded:true, tasks:[] });
+    if (projects.length > VISIBLE) showMore = true;
+    save(); render();
+    const names = document.querySelectorAll('#todo-list .cl-name');
+    const last = names[names.length - 1];
+    last.focus();
+    document.execCommand('selectAll', false, null);
+  });
+
+  render();
+})();
+
+/* ── Street View ── */
+(function initStreetView() {
+  const nameEl = document.getElementById('sv-location-name');
+  const mapEl  = document.getElementById('sv-minimap');
+  const panoEl = document.getElementById('sv-pano');
+  const view = { lat: 40.72163, lng: -73.99465, heading: 270, pitch: 0, zoom: 0 };
+
+  function drawPano() {
+    const { lat, lng, heading, pitch, zoom } = view;
+    panoEl.innerHTML = `<iframe src="https://maps.google.com/maps?layer=c&cbll=${lat},${lng}&cbp=11,${heading},0,${zoom},${pitch}&output=svembed" allowfullscreen loading="lazy"></iframe>`;
+  }
+
+  function load(lat, lng, name) {
+    Object.assign(view, { lat, lng, pitch: 0, zoom: 0 });
+    nameEl.textContent = name;
+    mapEl.innerHTML = `<iframe src="https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed" loading="lazy" tabindex="-1"></iframe>`;
+    drawPano();
+  }
+
+  const step = (key, delta, min, max) => () => {
+    view[key] = Math.min(max, Math.max(min, view[key] + delta));
+    drawPano();
+  };
+  document.getElementById('sv-minus').onclick = step('zoom', -1, 0, 3);
+  document.getElementById('sv-plus').onclick  = step('zoom', 1, 0, 3);
+  document.getElementById('sv-up').onclick    = step('pitch', -15, -90, 90);
+  document.getElementById('sv-down').onclick  = step('pitch', 15, -90, 90);
+
+  const fallback = () => load(view.lat, view.lng, 'Spring Street');
+
+  if (!navigator.geolocation) return fallback();
+  navigator.geolocation.getCurrentPosition(async ({ coords: { latitude: lat, longitude: lng } }) => {
+    let name = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    try {
+      const d = await (await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=17`)).json();
+      const a = d.address || {};
+      name = a.road || a.pedestrian || a.neighbourhood || a.suburb || name;
+    } catch(e) {}
+    load(lat, lng, name);
+  }, fallback, { timeout: 8000 });
+})();
+
+/* ── News ── */
+(function initNews() {
+  const container = document.getElementById('news-feed');
+  const GROUPS = [
+    { kicker:'RECENT NEWS',   label:'Politics',      feed:'https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml' },
+    { kicker:'RECENT NEWS',   label:'Design + Tech', feed:'https://www.dezeen.com/feed/' },
+    { kicker:'RECENT NEWS',   label:'Sports',        espnNews:['football/nfl', 'basketball/nba'] },
+    { kicker:'RECENT SCORES', label:'Sports',        scores:['basketball/nba', 'football/nfl', 'hockey/nhl'] },
+  ];
+  const MAX = 6;
+
+  const el = (tag, cls, text) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  };
+  const decoder = document.createElement('textarea');
+  const decode = s => { decoder.innerHTML = s || ''; return decoder.value; };
+  const monthYear = d => d ? new Date(d.replace(' ', 'T')).toLocaleDateString('en-US', { month:'long', year:'numeric' }) : '';
+
+  function card({ href, img, imgBg, source, title, author, meta, scoreLine }) {
+    const a = el('a', 'news-card');
+    a.href = href || '#';
+    a.target = '_blank';
+    a.rel = 'noopener';
+
+    const box = el('div', 'news-img' + (imgBg ? ' team' : img ? '' : ' empty'));
+    if (imgBg) box.style.background = imgBg;
+    if (img) {
+      const i = new Image();
+      i.src = img; i.alt = ''; i.loading = 'lazy';
+      i.onerror = () => { i.remove(); if (!imgBg) box.classList.add('empty'); };
+      box.appendChild(i);
+    }
+    a.append(box, el('p', 'news-source', source), el('p', 'news-title', title));
+
+    const m = el('div', 'news-meta');
+    if (author) {
+      const line = el('div', null, 'Author ');
+      line.appendChild(el('span', 'author', author));
+      m.appendChild(line);
+    }
+    if (meta) m.appendChild(el('div', scoreLine ? 'news-score' : null, meta));
+    a.appendChild(m);
+    return a;
+  }
+
+  async function articles(feed) {
+    const d = await (await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed)}`)).json();
+    if (d.status !== 'ok') throw new Error(d.message);
+    const source = decode(d.feed.title).split('>')[0].split(/\s[-–|:]\s/)[0].trim();
+    return d.items.slice(0, MAX).map(it => card({
+      href: it.link,
+      img: it.enclosure?.link || it.thumbnail || (it.description?.match(/<img[^>]+src="([^"]+)"/) || [])[1],
+      source: source || 'News',
+      title: decode(it.title),
+      author: decode(it.author).split(/,| and /)[0].trim(),
+      meta: monthYear(it.pubDate),
+    }));
+  }
+
+  async function espnNews(paths) {
+    const lists = await Promise.all(paths.map(p =>
+      fetch(`https://site.api.espn.com/apis/site/v2/sports/${p}/news`).then(r => r.json()).catch(() => null)));
+    return lists.flatMap(l => l?.articles || [])
+      .filter(a => a.type !== 'Media' && a.images?.length)
+      .sort((a, b) => b.published.localeCompare(a.published))
+      .slice(0, MAX)
+      .map(a => card({
+        href: a.links?.web?.href,
+        img: a.images[0].url,
+        source: 'ESPN',
+        title: a.headline,
+        author: (a.byline || '').split(/,| and /)[0].trim(),
+        meta: monthYear(a.published),
+      }));
+  }
+
+  async function scores(paths) {
+    const boards = await Promise.all(paths.map(p =>
+      fetch(`https://site.api.espn.com/apis/site/v2/sports/${p}/scoreboard`).then(r => r.json()).catch(() => null)));
+    const games = [];
+    boards.forEach(b => b?.events?.forEach(ev => {
+      if (ev.status?.type?.state !== 'post') return;
+      const comp = ev.competitions[0];
+      const teams = [...comp.competitors].sort((x, y) => (x.homeAway === 'away' ? -1 : 1));
+      const winner = comp.competitors.find(c => c.winner) || teams[0];
+      games.push({
+        date: ev.date,
+        href: ev.links?.[0]?.href,
+        img: winner.team.logo,
+        imgBg: '#' + (winner.team.color || '0000ee'),
+        source: `${b.leagues?.[0]?.abbreviation || ''} ${ev.status.type.shortDetail || 'Final'}`.trim(),
+        title: comp.headlines?.[0]?.shortLinkText || ev.name,
+        meta: teams.map(c => `${c.team.abbreviation} ${c.team.shortDisplayName} ${c.score}`).join(' – '),
+        scoreLine: true,
+      });
+    }));
+    return games.sort((a, b) => b.date.localeCompare(a.date)).slice(0, MAX).map(card);
+  }
+
+  GROUPS.forEach(g => {
+    const group = el('div', 'news-group');
+    group.append(el('p', 'h32', g.kicker), el('p', 'h32', g.label));
+    const row = el('div', 'news-cards');
+    row.appendChild(el('p', 'news-loading', 'Loading…'));
+    group.appendChild(row);
+    container.appendChild(group);
+
+    (g.scores ? scores(g.scores) : g.espnNews ? espnNews(g.espnNews) : articles(g.feed))
+      .then(cards => {
+        row.innerHTML = '';
+        if (!cards.length) throw new Error('empty');
+        row.append(...cards);
+      })
+      .catch(() => {
+        row.innerHTML = '';
+        row.appendChild(el('p', 'news-loading', g.scores ? 'No recent scores.' : 'Couldn’t load articles.'));
+      });
+  });
+})();
+
+/* ── Grid toggle (press G) ── */
+document.addEventListener('keydown', e => {
+  if (e.target.isContentEditable || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+  if (e.key === 'g' || e.key === 'G') {
+    document.getElementById('grid-overlay').classList.toggle('visible');
+  }
+});
+
+/* ── Active nav ── */
+const links    = document.querySelectorAll('.nl');
+const sections = document.querySelectorAll('section[id]');
+
+function updateActiveNav() {
+  const line = 64 + (innerHeight - 64) * 0.35;
+  const atBottom = innerHeight + scrollY >= document.documentElement.scrollHeight - 2;
+  let current = sections[0];
+  sections.forEach(s => { if (s.getBoundingClientRect().top <= line) current = s; });
+  if (atBottom) current = sections[sections.length - 1];
+  links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current.id));
+}
+addEventListener('scroll', updateActiveNav, { passive: true });
+addEventListener('resize', updateActiveNav);
+updateActiveNav();
+
+</script>
+</body>
+</html>
