@@ -36,10 +36,10 @@ body {
   position: absolute;
   top: 26px;
   left: 0; right: 0;
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  padding: 0 30px;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  column-gap: 10px;
+  padding: 0 10px;
   border-bottom: 1px solid #000;
 }
 
@@ -52,8 +52,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1;
-  min-width: 100px;
+  grid-column: span 2; /* each tab = 2 grid columns, like the Figma nav */
   height: 37px;
   border: 1px solid #000;
   margin-bottom: -1px;
@@ -63,7 +62,7 @@ body {
   transition: background 0.12s, color 0.12s;
 }
 .nl:hover { background: #0000ee; color: #fff; }
-.nl.active { border-bottom: 1px solid #fff; position: relative; z-index: 1; }
+.nl.active { background: #0000ee; color: #fff; border-color: #0000ee; position: relative; z-index: 1; }
 
 /* ── Shared ── */
 section { scroll-margin-top: 63px; }
@@ -515,13 +514,12 @@ body.editing .ed:focus { outline: 1px solid #0000ee; outline-offset: 2px; }
 <!-- Nav -->
 <nav id="nav">
   <div id="nav-row">
-    <a class="nl active" href="#introduction">Introduction</a>
-    <a class="nl" href="#today">Today</a>
-    <a class="nl" href="#overview">Overview</a>
-    <a class="nl" href="#calendar">Calendar</a>
-    <a class="nl" href="#todo">To Do</a>
-    <a class="nl" href="#streetview">Street View</a>
-    <a class="nl" href="#news">News</a>
+    <!-- data-sections: which page sections light up each tab while scrolling -->
+    <a class="nl active" href="#introduction" data-sections="introduction">Introduction</a>
+    <a class="nl" href="#today" data-sections="today">Today</a>
+    <a class="nl" href="#overview" data-sections="overview todo">Projects/Tasks</a>
+    <a class="nl" href="#calendar" data-sections="calendar">Calendar</a>
+    <a class="nl" href="#streetview" data-sections="streetview news">Various</a>
   </div>
 </nav>
 <button id="edit-btn" type="button">Edit</button>
@@ -1540,7 +1538,7 @@ function updateActiveNav() {
   let current = sections[0];
   sections.forEach(s => { if (s.getBoundingClientRect().top <= line) current = s; });
   if (atBottom) current = sections[sections.length - 1];
-  links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current.id));
+  links.forEach(a => a.classList.toggle('active', a.dataset.sections.split(' ').includes(current.id)));
 }
 addEventListener('scroll', updateActiveNav, { passive: true });
 addEventListener('resize', updateActiveNav);
