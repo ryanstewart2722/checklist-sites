@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const arg = name => { const i = process.argv.indexOf('--' + name); return i > -1 ? process.argv[i + 1] : undefined; };
 
@@ -8,8 +9,10 @@ const PORT = Number(arg('port') || process.env.PORT || 8091);
 const ROOT = __dirname;
 const DATA_FILE = path.resolve(ROOT, arg('data') || 'data/store.json');
 const DATA_DIR = path.dirname(DATA_FILE);
+const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
 const KEY_RE = /^[\w-]{1,64}$/;
-const MAX_BODY = 1024 * 1024;
+const MAX_BODY = 10 * 1024 * 1024;
+const MAX_UPLOAD = 20 * 1024 * 1024;
 const ALLOWED_HOSTS = new Set([`localhost:${PORT}`, `127.0.0.1:${PORT}`, `[::1]:${PORT}`]);
 
 const mime = {
@@ -49,6 +52,26 @@ function handleApi(req, res, urlPath) {
 
   if (urlPath === '/api/store' && req.method === 'GET') return json(res, 200, readStore());
 
+  // Saves an event picture (already resized to JPEG by the page) into data/uploads.
+  if (urlPath === '/api/upload' && req.method === 'POST') {
+    if (req.headers['content-type'] !== 'image/jpeg') return json(res, 415, { error: 'jpeg only' });
+    const chunks = [];
+    let size = 0;
+    req.on('data', chunk => {
+      size += chunk.length;
+      if (size > MAX_UPLOAD) { json(res, 413, { error: 'too large' }); req.destroy(); return; }
+      chunks.push(chunk);
+    });
+    req.on('end', () => {
+      if (res.writableEnded) return;
+      const name = Date.now().toString(36) + '-' + crypto.randomBytes(4).toString('hex') + '.jpg';
+      fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+      fs.writeFileSync(path.join(UPLOAD_DIR, name), Buffer.concat(chunks));
+      json(res, 200, { url: '/uploads/' + name });
+    });
+    return;
+  }
+
   const m = urlPath.match(/^\/api\/store\/([^/]+)$/);
   if (!m || req.method !== 'PUT') return json(res, 404, { error: 'not found' });
   if (!KEY_RE.test(m[1])) return json(res, 400, { error: 'bad key' });
@@ -77,6 +100,15 @@ function handle(req, res) {
   catch (e) { res.writeHead(400); res.end('Bad request'); return; }
 
   if (urlPath.startsWith('/api/')) return handleApi(req, res, urlPath);
+
+  const upload = urlPath.match(/^\/uploads\/([\w-]+\.jpg)$/);
+  if (upload) {
+    return fs.readFile(path.join(UPLOAD_DIR, upload[1]), (err, data) => {
+      if (err) { res.writeHead(404); res.end('Not found'); return; }
+      res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'max-age=31536000, immutable' });
+      res.end(data);
+    });
+  }
 
   if (urlPath === '/') urlPath = '/index.html';
   const filePath = path.join(ROOT, urlPath);

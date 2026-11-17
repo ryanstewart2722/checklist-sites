@@ -27,7 +27,7 @@ body {
 #nav {
   position: fixed;
   top: 0; left: 0; right: 0;
-  height: 64px;
+  height: 63px; /* ends exactly at the black line, so no white strip shows under it */
   background: #fff;
   z-index: 200;
 }
@@ -282,7 +282,22 @@ section { scroll-margin-top: 63px; }
 .row-x:hover { opacity: 1 !important; }
 
 /* ── Overview ── */
-.projects-left { grid-column: 1 / 6; background: #ff00cc; margin: 66px 0 61px; }
+/* Pink panel = 838px in the design. It sticks below the nav while a long event list
+   scrolls past, and shrinks only if the window is too short to show all of it. */
+.projects-left {
+  grid-column: 1 / 6; background: #ff00cc; margin: 66px 0 61px; overflow: hidden;
+  position: sticky; top: 129px; align-self: start;
+  height: min(838px, calc(100vh - 190px));
+}
+#ov-img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+#ov-img.show { opacity: 1; }
+.ov-img-ctl { grid-column: 1 / -1; margin-top: 8px; color: #0000ee; display: none; }
+body.editing .ov-img-ctl { display: block; }
+.ov-img-ctl span { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.overview-row.drop { outline: 1px dashed #0000ee; outline-offset: 4px; }
 .projects-right { grid-column: 7 / 13; padding: 65px 0 61px; }
 .projects-right:hover .hover-add { opacity: 0.35; }
 .week-label { margin-bottom: 57px; }
@@ -383,15 +398,18 @@ section { scroll-margin-top: 63px; }
 .cl-tasks { display: none; position: relative; padding: 24px 0 28px; }
 .cl-tasks.open { display: block; }
 
-.cl-task { display: flex; align-items: flex-start; font-size: 30px; line-height: 47px; font-style: italic; }
+.cl-task { position: relative; display: flex; align-items: flex-start; font-size: 30px; line-height: 47px; font-style: italic; }
+.cl-task:hover .row-x { opacity: 0.35; }
 .cl-check {
-  width: 24px; height: 24px; flex-shrink: 0; margin: 10px 29px 0 0;
+  position: relative; width: 24px; height: 24px; flex-shrink: 0; margin: 10px 29px 0 0;
   border: 1px solid #8c8c8c; cursor: pointer;
 }
-.cl-check.done { background: #000; border-color: #000; }
-.cl-task-text { flex: 1; min-width: 0; outline: none; word-break: break-word; transition: opacity 0.2s; }
-.cl-task.done .cl-task-text { text-decoration: line-through; opacity: 0.35; }
-.cl-tasks:not(.show-done) .cl-task.done:not(.just-done) { display: none; }
+.cl-check.done::before, .cl-check.done::after {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 31px; height: 1.5px;
+  background: #0000ee; transform: translate(-50%, -50%) rotate(45deg);
+}
+.cl-check.done::after { transform: translate(-50%, -50%) rotate(-45deg); }
+.cl-task-text { flex: 1; min-width: 0; outline: none; word-break: break-word; }
 .cl-add-task { position: absolute; left: 53px; bottom: 1px; }
 
 .todo-foot { display: flex; justify-content: space-between; align-items: baseline; margin-top: 26px; }
@@ -443,6 +461,27 @@ section { scroll-margin-top: 63px; }
 .news-score { text-transform: uppercase; }
 .news-loading { font-size: 30px; line-height: 32px; color: #aaa; }
 
+/* ── Edit mode: nothing is editable until Edit is clicked; Save Changes writes it ── */
+#edit-btn {
+  position: fixed; right: 20px; bottom: 16px; z-index: 210;
+  font-family: 'Narrow', 'Arial Narrow', Arial, sans-serif; font-size: 16px; line-height: 1;
+  padding: 4px; border: 0; border-radius: 0; background: none; color: #c4c4c4;
+  -webkit-appearance: none; appearance: none;
+  cursor: pointer; transition: color 0.15s;
+}
+#edit-btn:focus { outline: none; }
+#edit-btn:focus-visible { outline: 1px solid #0000ee; outline-offset: 0; }
+#edit-btn:hover { color: #0000ee; }
+body.editing #edit-btn { color: #0000ee; text-decoration: underline; text-underline-offset: 3px; }
+body:not(.editing) .hover-add,
+body:not(.editing) .cal-add,
+body:not(.editing) .row-x { visibility: hidden; pointer-events: none; }
+body.editing .hover-add, body.editing .cal-add { opacity: 0.5 !important; }
+body.editing .hover-add:hover, body.editing .cal-add:hover { opacity: 1 !important; }
+body:not(.editing) .ed { cursor: inherit; user-select: none; }
+body.editing .ed:hover { outline: 1px dashed #0000ee; outline-offset: 2px; }
+body.editing .ed:focus { outline: 1px solid #0000ee; outline-offset: 2px; }
+
 /* ── Grid overlay (press G to toggle) ── */
 #grid-overlay {
   position: fixed;
@@ -485,6 +524,7 @@ section { scroll-margin-top: 63px; }
     <a class="nl" href="#news">News</a>
   </div>
 </nav>
+<button id="edit-btn" type="button">Edit</button>
 
 <!-- Introduction -->
 <section id="introduction">
@@ -543,7 +583,8 @@ section { scroll-margin-top: 63px; }
 </section>
 <!-- Overview -->
 <section id="overview">
-  <div class="projects-left"></div>
+  <div class="projects-left"><img id="ov-img" alt=""></div>
+  <input type="file" accept="image/*" id="ov-file" hidden>
   <div class="projects-right">
     <p class="h32 week-label">OVERVIEW</p>
     <div id="overview-list"></div>
@@ -646,13 +687,57 @@ const Store = (() => {
     return local;
   }
 
-  function set(key, value) {
+  function write(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
     if (server) { server[key] = value; push(key, value); }
   }
 
-  return { get, set };
+  // While editing, saves are held here and only written when Save Changes is clicked.
+  let held = false;
+  const staged = new Map();
+  function set(key, value) { if (held) staged.set(key, value); else write(key, value); }
+  function hold() { held = true; }
+  function commit() { held = false; staged.forEach((v, k) => write(k, v)); staged.clear(); }
+  const dirty = () => staged.size > 0;
+
+  return { get, set, hold, commit, dirty, hasServer: !!server };
 })();
+
+/* ── Edit mode ── */
+const Edit = {
+  on: false,
+  // Marks a text element as editable-in-edit-mode.
+  field(el) { el.classList.add('ed'); el.contentEditable = this.on ? 'plaintext-only' : 'false'; return el; },
+  set(on) {
+    if (document.activeElement && document.activeElement.isContentEditable) document.activeElement.blur();
+    this.on = on;
+    if (on) Store.hold(); else Store.commit();
+    document.body.classList.toggle('editing', on);
+    document.querySelectorAll('.ed').forEach(el => { el.contentEditable = on ? 'plaintext-only' : 'false'; });
+    document.getElementById('edit-btn').textContent = on ? 'Save Changes' : 'Edit';
+  },
+};
+
+/* Shrinks an image and stores it: as a file in data/uploads when the local server
+   is running, otherwise inline in the browser's storage. Returns the image URL. */
+async function storeImage(file) {
+  const bmp = await createImageBitmap(file);
+  const max = Store.hasServer ? 1800 : 1000;
+  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * scale);
+  c.height = Math.round(bmp.height * scale);
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.drawImage(bmp, 0, 0, c.width, c.height);
+  if (Store.hasServer) {
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
+    const res = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: blob });
+    if (res.ok) return (await res.json()).url;
+  }
+  return c.toDataURL('image/jpeg', 0.75);
+}
 
 /* ── Greeting ── */
 function updateGreeting() {
@@ -900,11 +985,41 @@ const WORDS = [
   function field(tag, cls, ev, key) {
     const el = document.createElement(tag);
     el.className = cls;
-    el.contentEditable = 'plaintext-only';
+    Edit.field(el);
     el.textContent = ev[key];
     el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
     el.addEventListener('blur', () => { ev[key] = el.textContent.trim(); save(); });
     return el;
+  }
+
+  // Hovering an event shows its picture over the pink panel.
+  const img = document.getElementById('ov-img');
+  function showImg(src) {
+    if (src) { img.src = src; img.classList.add('show'); }
+    else img.classList.remove('show');
+  }
+
+  // Moving between rows swaps the picture; leaving the list goes back to pink.
+  document.getElementById('overview-list').addEventListener('mouseleave', () => showImg(null));
+
+  const fileInput = document.getElementById('ov-file');
+  async function attach(ev, file, ctl) {
+    if (!file || !file.type.startsWith('image/')) return;
+    ctl.textContent = 'Uploading…';
+    try {
+      ev.image = await storeImage(file);
+      save(); render(); showImg(ev.image);
+    } catch (e) {
+      alert('Couldn’t read that image. Try a JPG or PNG.');
+      render();
+    }
+  }
+
+  function link(text, onClick) {
+    const s = document.createElement('span');
+    s.textContent = text;
+    s.addEventListener('click', onClick);
+    return s;
   }
 
   function render() {
@@ -918,7 +1033,20 @@ const WORDS = [
       const del = document.createElement('span');
       del.className = 'row-x';
       del.textContent = '×';
-      del.addEventListener('click', () => { events.splice(i, 1); save(); render(); });
+      del.addEventListener('click', () => { events.splice(i, 1); save(); render(); showImg(null); });
+
+      const ctl = document.createElement('div');
+      ctl.className = 'narrow ov-img-ctl';
+      const pick = () => {
+        fileInput.onchange = () => { const f = fileInput.files[0]; fileInput.value = ''; attach(ev, f, ctl); };
+        fileInput.click();
+      };
+      if (ev.image) {
+        ctl.append(link('Change image', pick), '  ·  ',
+          link('Remove image', () => { ev.image = ''; save(); render(); showImg(null); }));
+      } else {
+        ctl.append(link('+ Add image (or drop one here)', pick));
+      }
 
       row.append(
         del,
@@ -926,7 +1054,18 @@ const WORDS = [
         field('span', 'narrow overview-time', ev, 'time'),
         field('span', 'narrow overview-cat', ev, 'category'),
         field('span', 'narrow blue-link overview-link', ev, 'link'),
+        ctl,
       );
+
+      row.addEventListener('mouseenter', () => showImg(ev.image));
+      row.addEventListener('dragover', e => { if (Edit.on) { e.preventDefault(); row.classList.add('drop'); } });
+      row.addEventListener('dragleave', () => row.classList.remove('drop'));
+      row.addEventListener('drop', e => {
+        row.classList.remove('drop');
+        if (!Edit.on) return;
+        e.preventDefault();
+        attach(ev, e.dataTransfer.files[0], ctl);
+      });
       list.appendChild(row);
     });
   }
@@ -971,7 +1110,7 @@ const WORDS = [
   function editable(cls, ev, field, onEnter) {
     const el = document.createElement('span');
     el.className = cls;
-    el.contentEditable = 'plaintext-only';
+    Edit.field(el);
     el.textContent = ev[field];
     el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); onEnter(el); } });
     el.addEventListener('blur', () => {
@@ -1073,6 +1212,8 @@ const WORDS = [
 
   let projects = Store.get(KEY);
   if (!Array.isArray(projects)) projects = DEFAULT;
+  projects.forEach(p => p.tasks.sort((a, b) => a.done - b.done));
+  const firstDone = p => { const i = p.tasks.findIndex(t => t.done); return i < 0 ? p.tasks.length : i; };
   let showMore = false;
   let focusRequest = null;
 
@@ -1087,9 +1228,9 @@ const WORDS = [
   function rowField(cls, project, key) {
     const el = document.createElement('span');
     el.className = cls;
-    el.contentEditable = 'plaintext-only';
+    Edit.field(el);
     el.textContent = project[key];
-    el.addEventListener('click', e => e.stopPropagation());
+    el.addEventListener('click', e => { if (Edit.on) e.stopPropagation(); });
     el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
     el.addEventListener('blur', () => { project[key] = el.textContent.trim(); save(); });
     return el;
@@ -1136,16 +1277,21 @@ const WORDS = [
 
         const textEl = document.createElement('div');
         textEl.className = 'cl-task-text';
-        textEl.contentEditable = 'plaintext-only';
+        Edit.field(textEl);
         textEl.textContent = task.text;
 
+        // Checked tasks stay, marked with a blue ×, and move below the open ones.
         check.addEventListener('click', () => {
-          task.done = !task.done; save();
-          check.classList.toggle('done', task.done);
-          taskRow.classList.toggle('done', task.done);
-          taskRow.classList.add('just-done');
-          setTimeout(() => taskRow.classList.remove('just-done'), 900);
+          task.done = !task.done;
+          project.tasks.splice(ti, 1);
+          project.tasks.splice(task.done ? project.tasks.length : firstDone(project), 0, task);
+          save(); render();
         });
+
+        const del = document.createElement('span');
+        del.className = 'row-x';
+        del.textContent = '×';
+        del.addEventListener('click', () => { project.tasks.splice(ti, 1); save(); render(); });
 
         textEl.addEventListener('blur', () => { task.text = textEl.textContent; save(); });
         textEl.addEventListener('keydown', e => {
@@ -1163,7 +1309,7 @@ const WORDS = [
           }
         });
 
-        taskRow.append(check, textEl);
+        taskRow.append(del, check, textEl);
         tasksEl.appendChild(taskRow);
 
         if (focusRequest && focusRequest.id === project.id && focusRequest.ti === ti) {
@@ -1176,8 +1322,9 @@ const WORDS = [
       addTask.className = 'cl-add-task narrow hover-add';
       addTask.textContent = '+ Add task';
       addTask.addEventListener('click', () => {
-        project.tasks.push({ id:uid(), text:'', done:false });
-        focusRequest = { id: project.id, ti: project.tasks.length - 1 };
+        const at = firstDone(project);
+        project.tasks.splice(at, 0, { id:uid(), text:'', done:false });
+        focusRequest = { id: project.id, ti: at };
         save(); render();
       });
       tasksEl.appendChild(addTask);
@@ -1367,6 +1514,13 @@ const WORDS = [
       });
   });
 })();
+
+/* ── Edit / Save Changes ── */
+document.getElementById('edit-btn').addEventListener('click', () => Edit.set(!Edit.on));
+addEventListener('beforeunload', e => {
+  if (Edit.on && document.activeElement && document.activeElement.isContentEditable) document.activeElement.blur();
+  if (Edit.on && Store.dirty()) e.preventDefault();
+});
 
 /* ── Grid toggle (press G) ── */
 document.addEventListener('keydown', e => {
