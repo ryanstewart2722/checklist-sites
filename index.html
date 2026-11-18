@@ -790,6 +790,7 @@ const Store = (() => {
     catch (e) { return null; }
   }
 
+  let isReady = false;
   const ready = (async () => {
     localServer = await loadLocalServer();
     if (cloudConfigured) {
@@ -818,6 +819,7 @@ const Store = (() => {
     }
     if (localServer) { data = localServer; mode = 'server'; }
   })();
+  ready.then(() => { isReady = true; });
 
   // Saves go out one at a time so an older save can never land after a newer one.
   let queue = Promise.resolve();
@@ -866,9 +868,9 @@ const Store = (() => {
   function commit() { held = false; staged.forEach((v, k) => write(k, v)); staged.clear(); }
   const dirty = () => staged.size > 0;
 
-  async function signIn() {
-    await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-    location.reload();
+  function signIn() {
+    // Opens the popup synchronously (no await before it) so Safari treats it as part of the tap.
+    return auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(() => location.reload());
   }
 
   // Pictures live in their own documents ("checklist-images"); events store "fsimg:<id>".
@@ -930,6 +932,7 @@ const Store = (() => {
 
   return {
     ready, get, set, hold, commit, dirty, signIn, saveImage, imageURL,
+    get isReady() { return isReady; },
     get mode() { return mode; },
     get needsSignIn() { return cloudConfigured && !user; },
     get cloudError() { return cloudError; },
@@ -1792,11 +1795,15 @@ Store.ready.then(() => {
 });
 
 /* ── Edit / Save Changes ── */
-document.getElementById('edit-btn').addEventListener('click', async () => {
-  await Store.ready;
+// No awaiting before sign-in: Safari only allows the Google popup if it opens right in the tap.
+document.getElementById('edit-btn').addEventListener('click', () => {
+  if (!Store.isReady) return;  // still loading
   if (Store.cloudError) { alert(Store.cloudError); return; }
   if (Store.needsSignIn) {
-    try { await Store.signIn(); } catch (e) { if (e.code !== 'auth/popup-closed-by-user') alert('Sign-in failed: ' + e.message); }
+    Store.signIn().catch(e => {
+      if (e.code === 'auth/popup-blocked') alert('Your browser blocked the Google sign-in window. Allow pop-ups for this site, then tap “Sign in to edit” again.');
+      else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') alert('Sign-in failed: ' + e.message);
+    });
     return;
   }
   Edit.set(!Edit.on);
