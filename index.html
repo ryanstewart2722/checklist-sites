@@ -866,19 +866,37 @@ const Store = (() => {
 
   // Pictures live in their own documents ("checklist-images"); events store "fsimg:<id>".
   const imgCache = new Map();
+  // A document holds at most 1MB, so bigger pictures (GIFs) are split across "<id>_p0", "<id>_p1"…
+  const CHUNK = 900000;
   async function saveImage(dataUrl) {
-    const ref = db.collection('checklist-images').doc();
-    await ref.set({ data: dataUrl });
+    const col = db.collection('checklist-images');
+    const ref = col.doc();
+    if (dataUrl.length <= CHUNK) {
+      await ref.set({ data: dataUrl });
+    } else {
+      const parts = Math.ceil(dataUrl.length / CHUNK);
+      for (let i = 0; i < parts; i++) {
+        await col.doc(ref.id + '_p' + i).set({ data: dataUrl.slice(i * CHUNK, (i + 1) * CHUNK) });
+      }
+      await ref.set({ parts });
+    }
     imgCache.set(ref.id, dataUrl);
     return 'fsimg:' + ref.id;
+  }
+  async function loadImage(id) {
+    const col = db.collection('checklist-images');
+    const d = await col.doc(id).get();
+    if (!d.exists) return '';
+    const { data, parts } = d.data();
+    if (!parts) return data;
+    const pieces = await Promise.all(
+      Array.from({ length: parts }, (_, i) => col.doc(id + '_p' + i).get().then(p => p.data().data)));
+    return pieces.join('');
   }
   async function imageURL(src) {
     if (!src || !src.startsWith('fsimg:')) return src;
     const id = src.slice(6);
-    if (!imgCache.has(id)) {
-      imgCache.set(id, db.collection('checklist-images').doc(id).get()
-        .then(d => (d.exists ? d.data().data : ''), () => ''));
-    }
+    if (!imgCache.has(id)) imgCache.set(id, loadImage(id).catch(() => ''));
     return imgCache.get(id);
   }
 
@@ -921,6 +939,14 @@ async function storeImage(file) {
     ctx.drawImage(bmp, 0, 0, c.width, c.height);
     return c;
   };
+  if (Store.mode === 'cloud' && file.type === 'image/gif') {
+    // GIFs are kept as-is so they stay animated (resizing through a canvas would freeze them).
+    if (file.size > 8 * 1024 * 1024) throw new Error('GIF is over 8MB');
+    const url = await new Promise((res, rej) => {
+      const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file);
+    });
+    return Store.saveImage(url);
+  }
   if (Store.mode === 'cloud') {
     // A cloud document holds at most 1MB, so shrink until the picture fits comfortably.
     let url = '';
@@ -1217,7 +1243,7 @@ function initOverview() {
       ev.image = await storeImage(file);
       save(); render(); showImg(ev.image);
     } catch (e) {
-      alert('Couldn’t read that image. Try a JPG or PNG.');
+      alert(/8MB/.test(e.message) ? 'That GIF is over 8MB. Try a smaller one.' : 'Couldn’t read that image. Try a JPG, PNG or GIF.');
       render();
     }
   }
