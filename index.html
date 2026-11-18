@@ -753,28 +753,69 @@ body.editing .ed:focus { outline: 1px solid #0000ee; outline-offset: 2px; }
   <div class="news-inner" id="news-feed"></div>
 </section>
 
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
 
-/* ── Store: saves to data/store.json via server.js, falls back to localStorage ──
+/* ── Firebase: the one shared copy of everything you save ──
+   Paste the web-app config from Firebase → Project settings → Your apps.
+   (These values are public identifiers, not secrets; access is locked by the Firestore rules.) */
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyDivIjMgNYX8bPhPIvbBXvDxbWoViLSPuQ',
+  authDomain: 'mynotion-813fc.firebaseapp.com',
+  projectId: 'mynotion-813fc',
+  appId: '1:659247846875:web:a5af1bf758a62e9628c3fe',
+};
+
+/* ── Store ──
+   Signed in with Firebase: reads and saves the shared copy (Firestore collection "checklist",
+   one document per key). Otherwise falls back to data/store.json on localhost, then this browser.
    Keys are permanent; change data shapes by migrating in place, never by renaming a key. */
 const Store = (() => {
-  let server = null;
-  if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
-    try {
-      const xhr = new XMLHttpRequest();
-      xhr.open('GET', '/api/store', false);
-      xhr.send();
-      if (xhr.status === 200) server = JSON.parse(xhr.responseText);
-    } catch (e) {}
-  }
+  const isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  const cloudConfigured = !!(FIREBASE_CONFIG.apiKey && window.firebase);
+  let mode = 'browser';          // 'cloud' | 'server' | 'browser'
+  let data = {};                 // values from the shared copy (or local server)
+  let localServer = null;        // data/store.json, used to seed the cloud the first time
+  let db = null, auth = null, user = null;
 
   function readLocal(key) {
     try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
   }
 
+  async function loadLocalServer() {
+    if (!isLocal) return null;
+    try { const r = await fetch('/api/store', { cache: 'no-store' }); return r.ok ? await r.json() : null; }
+    catch (e) { return null; }
+  }
+
+  const ready = (async () => {
+    localServer = await loadLocalServer();
+    if (cloudConfigured) {
+      try {
+        firebase.initializeApp(FIREBASE_CONFIG);
+        auth = firebase.auth();
+        db = firebase.firestore();
+        user = await new Promise(res => { const off = auth.onAuthStateChanged(u => { off(); res(u); }); });
+        if (user) {
+          const snap = await db.collection('checklist').get();
+          snap.forEach(doc => { try { data[doc.id] = JSON.parse(doc.data().json); } catch (e) {} });
+          mode = 'cloud';
+          return;
+        }
+      } catch (e) {
+        console.warn('Cloud data unavailable:', e);
+        if (e && e.code === 'permission-denied') alert('This Google account isn’t allowed to open this checklist.');
+      }
+    }
+    if (localServer) { data = localServer; mode = 'server'; }
+  })();
+
   // Saves go out one at a time so an older save can never land after a newer one.
   let queue = Promise.resolve();
   const pending = new Map();
+  let failed = false;
   function push(key, value) {
     const queued = pending.has(key);
     pending.set(key, value);
@@ -782,23 +823,32 @@ const Store = (() => {
     queue = queue.then(() => {
       const body = JSON.stringify(pending.get(key));
       pending.delete(key);
+      if (mode === 'cloud') {
+        return db.collection('checklist').doc(key)
+          .set({ json: body, savedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      }
       return fetch('/api/store/' + encodeURIComponent(key), {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body, keepalive: body.length < 60000,
       });
-    }).catch(() => {});
+    }).catch(e => {
+      failed = true;
+      console.error('Save failed:', e);
+      alert('Your changes couldn’t be saved to the cloud. Check your connection, then click Edit → Save Changes again.');
+    });
   }
 
   function get(key) {
-    if (server && key in server) return server[key];
-    const local = readLocal(key);
-    if (server && local != null) { server[key] = local; push(key, local); }
-    return local;
+    if (key in data) return data[key];
+    // Not in the shared copy yet: seed it from data/store.json or this browser, once.
+    const seed = (localServer && localServer[key]) ?? readLocal(key);
+    if (seed != null && mode !== 'browser') { data[key] = seed; push(key, seed); }
+    return seed;
   }
 
   function write(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
-    if (server) { server[key] = value; push(key, value); }
+    if (mode !== 'browser') { data[key] = value; push(key, value); }
   }
 
   // While editing, saves are held here and only written when Save Changes is clicked.
@@ -809,7 +859,36 @@ const Store = (() => {
   function commit() { held = false; staged.forEach((v, k) => write(k, v)); staged.clear(); }
   const dirty = () => staged.size > 0;
 
-  return { get, set, hold, commit, dirty, hasServer: !!server };
+  async function signIn() {
+    await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+    location.reload();
+  }
+
+  // Pictures live in their own documents ("checklist-images"); events store "fsimg:<id>".
+  const imgCache = new Map();
+  async function saveImage(dataUrl) {
+    const ref = db.collection('checklist-images').doc();
+    await ref.set({ data: dataUrl });
+    imgCache.set(ref.id, dataUrl);
+    return 'fsimg:' + ref.id;
+  }
+  async function imageURL(src) {
+    if (!src || !src.startsWith('fsimg:')) return src;
+    const id = src.slice(6);
+    if (!imgCache.has(id)) {
+      imgCache.set(id, db.collection('checklist-images').doc(id).get()
+        .then(d => (d.exists ? d.data().data : ''), () => ''));
+    }
+    return imgCache.get(id);
+  }
+
+  return {
+    ready, get, set, hold, commit, dirty, signIn, saveImage, imageURL,
+    get mode() { return mode; },
+    get needsSignIn() { return cloudConfigured && !user; },
+    get hasServer() { return mode === 'server'; },
+    get failed() { return failed; },
+  };
 })();
 
 /* ── Edit mode ── */
@@ -827,19 +906,31 @@ const Edit = {
   },
 };
 
-/* Shrinks an image and stores it: as a file in data/uploads when the local server
-   is running, otherwise inline in the browser's storage. Returns the image URL. */
+/* Shrinks an image and stores it: in the shared cloud copy when signed in, as a file in
+   data/uploads on the local server, otherwise inline in this browser. Returns the image URL. */
 async function storeImage(file) {
   const bmp = await createImageBitmap(file);
-  const max = Store.hasServer ? 1800 : 1000;
-  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
-  const c = document.createElement('canvas');
-  c.width = Math.round(bmp.width * scale);
-  c.height = Math.round(bmp.height * scale);
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, c.width, c.height);
-  ctx.drawImage(bmp, 0, 0, c.width, c.height);
+  const draw = max => {
+    const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * scale);
+    c.height = Math.round(bmp.height * scale);
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(bmp, 0, 0, c.width, c.height);
+    return c;
+  };
+  if (Store.mode === 'cloud') {
+    // A cloud document holds at most 1MB, so shrink until the picture fits comfortably.
+    let url = '';
+    for (const [max, q] of [[1600, 0.82], [1300, 0.78], [1000, 0.75], [800, 0.7]]) {
+      url = draw(max).toDataURL('image/jpeg', q);
+      if (url.length < 900000) break;
+    }
+    return Store.saveImage(url);
+  }
+  const c = draw(Store.hasServer ? 1800 : 1000);
   if (Store.hasServer) {
     const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
     const res = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: blob });
@@ -1074,7 +1165,7 @@ const WORDS = [
 })();
 
 /* ── Overview ── */
-(function initOverview() {
+function initOverview() {
   const KEY = 'studio-overview-v2';
   const DEFAULT = [
     { id:'e1', title:'Variant Checkin with Christian', time:'02:00 –  02:30 PM', category:'Composite',   link:'Google Meet' },
@@ -1103,9 +1194,14 @@ const WORDS = [
 
   // Hovering an event shows its picture over the pink panel.
   const img = document.getElementById('ov-img');
+  let imgToken = 0;
   function showImg(src) {
-    if (src) { img.src = src; img.classList.add('show'); }
-    else img.classList.remove('show');
+    const t = ++imgToken;
+    if (!src) { img.classList.remove('show'); return; }
+    Promise.resolve(Store.imageURL(src)).then(url => {
+      if (t !== imgToken) return;  // the mouse has moved on to another event
+      if (url) { img.src = url; img.classList.add('show'); } else img.classList.remove('show');
+    });
   }
 
   // Moving between rows swaps the picture; leaving the list goes back to pink.
@@ -1167,6 +1263,7 @@ const WORDS = [
       );
 
       row.addEventListener('mouseenter', () => showImg(ev.image));
+      if (ev.image) Store.imageURL(ev.image);  // preload so hovering is instant
       row.addEventListener('dragover', e => { if (Edit.on) { e.preventDefault(); row.classList.add('drop'); } });
       row.addEventListener('dragleave', () => row.classList.remove('drop'));
       row.addEventListener('drop', e => {
@@ -1187,10 +1284,10 @@ const WORDS = [
   });
 
   render();
-})();
+}
 
 /* ── Calendar ── */
-(function initCalendar() {
+function initCalendar() {
   const KEY = 'studio-cal-events-v2';
   const WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -1299,10 +1396,10 @@ const WORDS = [
 
   renderLeft();
   renderGrid();
-})();
+}
 
 /* ── To Do ── */
-(function initTodo() {
+function initTodo() {
   const KEY = 'studio-todo-v2';
   const VISIBLE = 3;
   const t = text => ({ id: Math.random().toString(36).slice(2, 9), text, done: false });
@@ -1322,6 +1419,8 @@ const WORDS = [
   let projects = Store.get(KEY);
   if (!Array.isArray(projects)) projects = DEFAULT;
   projects.forEach(p => p.tasks.sort((a, b) => a.done - b.done));
+  // Every visit starts with all client sections closed.
+  projects.forEach(p => { p.expanded = false; });
   const firstDone = p => { const i = p.tasks.findIndex(t => t.done); return i < 0 ? p.tasks.length : i; };
   let showMore = false;
   let focusRequest = null;
@@ -1457,7 +1556,7 @@ const WORDS = [
   });
 
   render();
-})();
+}
 
 /* ── Street View ── */
 (function initStreetView() {
@@ -1624,8 +1723,23 @@ const WORDS = [
   });
 })();
 
+/* ── Sections that use saved data start once it has loaded ── */
+Store.ready.then(() => {
+  initOverview();
+  initCalendar();
+  initTodo();
+  updateActiveNav();
+});
+
 /* ── Edit / Save Changes ── */
-document.getElementById('edit-btn').addEventListener('click', () => Edit.set(!Edit.on));
+document.getElementById('edit-btn').addEventListener('click', async () => {
+  await Store.ready;
+  if (Store.needsSignIn) {
+    try { await Store.signIn(); } catch (e) { if (e.code !== 'auth/popup-closed-by-user') alert('Sign-in failed: ' + e.message); }
+    return;
+  }
+  Edit.set(!Edit.on);
+});
 addEventListener('beforeunload', e => {
   if (Edit.on && document.activeElement && document.activeElement.isContentEditable) document.activeElement.blur();
   if (Edit.on && Store.dirty()) e.preventDefault();
