@@ -62,7 +62,9 @@ body {
   transition: background 0.12s, color 0.12s;
 }
 .nl:hover { background: #0000ee; color: #fff; }
-.nl.active { background: #0000ee; color: #fff; border-color: #0000ee; position: relative; z-index: 1; }
+/* Current section: tab stays white and opens into the page (no bottom line). Blue is hover only. */
+.nl.active { border-bottom-color: #fff; position: relative; z-index: 1; }
+.nl.active:hover { border-bottom-color: #0000ee; }
 
 /* ── Shared ── */
 section { scroll-margin-top: 63px; }
@@ -517,8 +519,8 @@ body.editing .ed:focus { outline: 1px solid #0000ee; outline-offset: 2px; }
     <!-- data-sections: which page sections light up each tab while scrolling -->
     <a class="nl active" href="#introduction" data-sections="introduction">Introduction</a>
     <a class="nl" href="#today" data-sections="today">Today</a>
-    <a class="nl" href="#overview" data-sections="overview todo">Projects/Tasks</a>
     <a class="nl" href="#calendar" data-sections="calendar">Calendar</a>
+    <a class="nl" href="#overview" data-sections="overview todo">Projects/Tasks</a>
     <a class="nl" href="#streetview" data-sections="streetview news">Various</a>
   </div>
 </nav>
@@ -579,17 +581,6 @@ body.editing .ed:focus { outline: 1px solid #0000ee; outline-offset: 2px; }
     <p id="date-local"></p>
   </div>
 </section>
-<!-- Overview -->
-<section id="overview">
-  <div class="projects-left"><img id="ov-img" alt=""></div>
-  <input type="file" accept="image/*" id="ov-file" hidden>
-  <div class="projects-right">
-    <p class="h32 week-label">OVERVIEW</p>
-    <div id="overview-list"></div>
-    <div class="narrow hover-add" id="add-event-btn">+ Add event</div>
-  </div>
-</section>
-
 <!-- Calendar -->
 <section id="calendar">
   <div class="cal-left">
@@ -607,6 +598,18 @@ body.editing .ed:focus { outline: 1px solid #0000ee; outline-offset: 2px; }
     </div>
   </div>
 </section>
+
+<!-- Overview -->
+<section id="overview">
+  <div class="projects-left"><img id="ov-img" alt=""></div>
+  <input type="file" accept="image/*" id="ov-file" hidden>
+  <div class="projects-right">
+    <p class="h32 week-label">OVERVIEW</p>
+    <div id="overview-list"></div>
+    <div class="narrow hover-add" id="add-event-btn">+ Add event</div>
+  </div>
+</section>
+
 
 <!-- To Do -->
 <section id="todo">
