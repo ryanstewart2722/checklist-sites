@@ -1205,7 +1205,9 @@ function initOverview() {
   }
 
   // Moving between rows swaps the picture; leaving the list goes back to pink.
-  document.getElementById('overview-list').addEventListener('mouseleave', () => showImg(null));
+  // Resting picture = the first event that has one (pink if none do).
+  const restingImg = () => (events.find(e => e.image) || {}).image || null;
+  document.getElementById('overview-list').addEventListener('mouseleave', () => showImg(restingImg()));
 
   const fileInput = document.getElementById('ov-file');
   async function attach(ev, file, ctl) {
@@ -1238,7 +1240,7 @@ function initOverview() {
       const del = document.createElement('span');
       del.className = 'row-x';
       del.textContent = '×';
-      del.addEventListener('click', () => { events.splice(i, 1); save(); render(); showImg(null); });
+      del.addEventListener('click', () => { events.splice(i, 1); save(); render(); showImg(restingImg()); });
 
       const ctl = document.createElement('div');
       ctl.className = 'narrow ov-img-ctl';
@@ -1248,7 +1250,7 @@ function initOverview() {
       };
       if (ev.image) {
         ctl.append(link('Change image', pick), '  ·  ',
-          link('Remove image', () => { ev.image = ''; save(); render(); showImg(null); }));
+          link('Remove image', () => { ev.image = ''; save(); render(); showImg(restingImg()); }));
       } else {
         ctl.append(link('+ Add image (or drop one here)', pick));
       }
@@ -1284,6 +1286,7 @@ function initOverview() {
   });
 
   render();
+  showImg(restingImg());
 }
 
 /* ── Calendar ── */
@@ -1422,7 +1425,7 @@ function initTodo() {
   // Every visit starts with all client sections closed.
   projects.forEach(p => { p.expanded = false; });
   const firstDone = p => { const i = p.tasks.findIndex(t => t.done); return i < 0 ? p.tasks.length : i; };
-  let showMore = false;
+  let showMore = true;  // all projects visible at first; View Less collapses to 3
   let focusRequest = null;
 
   function save() { Store.set(KEY, projects); }
