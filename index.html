@@ -536,7 +536,7 @@ body.signed-out #signin-block {
 }
 #signin-btn:hover { background: #0000ee; color: #fff; border-color: #0000ee; }
 body.signed-out #overview, body.signed-out #todo, body.signed-out #streetview,
-body.signed-out .news-group:not(.news-scores), body.signed-out .cal-scroll-wrap,
+body.signed-out .cal-scroll-wrap,
 body.signed-out #weather-line, body.signed-out #edit-btn,
 body.signed-out .nl[data-sections~="overview"] { display: none; }
 body.auth-pending #overview, body.auth-pending #todo, body.auth-pending .cal-scroll-wrap,
@@ -1760,7 +1760,7 @@ function initStreetView() {
 (function initNews() {
   const container = document.getElementById('news-feed');
   const GROUPS = [
-    { kicker:'RECENT NEWS',   label:'Politics',      feed:'https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml' },
+    { kicker:'RECENT NEWS',   label:'Philadelphia Eagles', espnNews:['football/nfl'], team:{ id:'phi', name:'Philadelphia Eagles' } },
     { kicker:'RECENT NEWS',   label:'Design + Tech', feed:'https://www.dezeen.com/feed/' },
     { kicker:'RECENT NEWS',   label:'Sports',        espnNews:['football/nfl', 'basketball/nba'] },
     { kicker:'RECENT SCORES', label:'Sports',        scores:['basketball/nba', 'football/nfl', 'hockey/nhl'] },
@@ -1818,11 +1818,17 @@ function initStreetView() {
     }));
   }
 
-  async function espnNews(paths) {
+  // team: only stories about that team (ESPN's team feed also carries league-wide roundups).
+  async function espnNews(paths, team) {
+    const query = team ? `?team=${team.id}&limit=40` : '';
     const lists = await Promise.all(paths.map(p =>
-      fetch(`https://site.api.espn.com/apis/site/v2/sports/${p}/news`).then(r => r.json()).catch(() => null)));
+      fetch(`https://site.api.espn.com/apis/site/v2/sports/${p}/news${query}`).then(r => r.json()).catch(() => null)));
+    const aboutTeam = a => {
+      const teams = (a.categories || []).filter(c => c.type === 'team').map(c => c.description);
+      return teams.includes(team.name) && teams.length <= 2;
+    };
     return lists.flatMap(l => l?.articles || [])
-      .filter(a => a.type !== 'Media' && a.images?.length)
+      .filter(a => a.type !== 'Media' && a.images?.length && (!team || aboutTeam(a)))
       .sort((a, b) => b.published.localeCompare(a.published))
       .slice(0, MAX)
       .map(a => card({
@@ -1873,7 +1879,7 @@ function initStreetView() {
     group.appendChild(row);
     container.appendChild(group);
 
-    (g.scores ? scores(g.scores) : g.espnNews ? espnNews(g.espnNews) : articles(g.feed))
+    (g.scores ? scores(g.scores) : g.espnNews ? espnNews(g.espnNews, g.team) : articles(g.feed))
       .then(cards => {
         row.innerHTML = '';
         if (!cards.length) throw new Error('empty');
