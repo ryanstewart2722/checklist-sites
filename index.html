@@ -1363,6 +1363,8 @@ function initCalendar() {
   let viewYear = selected.getFullYear();
   let viewMonth = selected.getMonth();
 
+  // Events copied from your Mac's Calendar app every 15 minutes (tools/calendar-sync).
+  const synced = (Store.get('studio-cal-sync') || {}).events || [];
   let calEvents = Store.get(KEY);
   if (!Array.isArray(calEvents)) {
     const t = iso(selected);
@@ -1397,14 +1399,39 @@ function initCalendar() {
 
     const container = document.getElementById('cal-events');
     container.innerHTML = '';
-    calEvents.filter(ev => ev.date === iso(selected)).forEach(ev => {
+    const day = iso(selected);
+    // Your own entries (editable) and events synced from your calendar accounts (read-only), by time.
+    const rows = [
+      ...calEvents.filter(ev => ev.date === day).map(ev => ({ ev, mine: true })),
+      ...synced.filter(ev => ev.date === day).map(ev => ({ ev, mine: false })),
+    ].sort((a, b) => minutes(a.ev.time) - minutes(b.ev.time));
+    rows.forEach(({ ev, mine }) => {
       const item = document.createElement('div');
       item.className = 'cal-event-item';
-      const timeEl = editable('cal-event-time', ev, 'time', el => el.blur());
-      const nameEl = editable('cal-event-name', ev, 'name', () => timeEl.focus());
-      item.append(nameEl, timeEl);
+      if (mine) {
+        const timeEl = editable('cal-event-time', ev, 'time', el => el.blur());
+        const nameEl = editable('cal-event-name', ev, 'name', () => timeEl.focus());
+        item.append(nameEl, timeEl);
+      } else {
+        const nameEl = document.createElement('span');
+        nameEl.className = 'cal-event-name';
+        nameEl.textContent = ev.name;
+        const timeEl = document.createElement('span');
+        timeEl.className = 'cal-event-time';
+        timeEl.textContent = ev.time;
+        item.title = ev.account + ' — ' + ev.calendar;
+        item.append(nameEl, timeEl);
+      }
       container.appendChild(item);
     });
+  }
+
+  // "09:00AM", "1:30 PM", "All day" → minutes after midnight, for ordering (blank = last).
+  function minutes(t) {
+    if (/all day/i.test(t || '')) return -1;
+    const m = /(\d{1,2}):(\d{2})\s*([ap])m/i.exec(t || '');
+    if (!m) return 24 * 60;
+    return (+m[1] % 12 + (/p/i.test(m[3]) ? 12 : 0)) * 60 + +m[2];
   }
 
   function renderGrid() {
