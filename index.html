@@ -329,7 +329,22 @@ body.editing .ov-img-ctl { display: block; }
 
 .cal-title { font-size: 32px; line-height: 32px; font-weight: 400; color: #000; }
 
-#cal-events { margin-top: 76px; }
+/* Long days scroll inside this box, which ends 16px above the big date's digits
+   (digit tops sit 493px below .cal-left's top; the list starts at 203px). A blur fades in
+   toward the number — full strength at the bottom, none at the top — while more is below. */
+.cal-scroll-wrap { position: relative; margin-top: 76px; z-index: 1; }
+.cal-scroll {
+  max-height: 274px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
+}
+.cal-scroll::-webkit-scrollbar { display: none; }
+.cal-fade {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 110px; pointer-events: none;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000);
+  mask-image: linear-gradient(to bottom, transparent, #000);
+  opacity: 0; transition: opacity 0.2s;
+}
+.cal-scroll-wrap.more .cal-fade { opacity: 1; }
 
 .cal-event-item { border-top: 1px solid #a0a0a0; padding: 9px 0 13px; }
 
@@ -550,7 +565,9 @@ body.editing .ed:focus { outline: 1px solid #0000ee; outline-offset: 2px; }
 
   /* Calendar: title, day, events, then the month grid */
   .cal-left { min-height: 0; padding-top: 48px; }
-  #cal-events { margin-top: 24px; }
+  .cal-scroll-wrap { margin-top: 24px; }
+  .cal-scroll { max-height: none; }
+  .cal-fade { display: none; }
   .cal-event-name, .cal-event-time { font-size: 16px; line-height: 22px; }
   .cal-add { font-size: 16px; }
   .cal-num { display: none; }
@@ -694,8 +711,13 @@ body.editing .ed:focus { outline: 1px solid #0000ee; outline-offset: 2px; }
   <div class="cal-left">
     <p class="cal-title">CALENDAR</p>
     <p class="cal-title" id="cal-day-str"></p>
-    <div id="cal-events"></div>
-    <div class="cal-add" id="cal-add">+ Add event</div>
+    <div class="cal-scroll-wrap" id="cal-scroll-wrap">
+      <div class="cal-scroll" id="cal-scroll">
+        <div id="cal-events"></div>
+        <div class="cal-add" id="cal-add">+ Add event</div>
+      </div>
+      <div class="cal-fade"></div>
+    </div>
     <div class="cal-num" id="cal-big-date"></div>
   </div>
   <div class="cal-right">
@@ -1393,6 +1415,16 @@ function initCalendar() {
     return el;
   }
 
+  // Shows the blur only while there are more events below the visible part of the list.
+  const scrollBox = document.getElementById('cal-scroll');
+  const scrollWrap = document.getElementById('cal-scroll-wrap');
+  function updateFade() {
+    const more = scrollBox.scrollHeight - scrollBox.scrollTop - scrollBox.clientHeight > 2;
+    scrollWrap.classList.toggle('more', more);
+  }
+  scrollBox.addEventListener('scroll', updateFade, { passive: true });
+  addEventListener('resize', updateFade);
+
   function renderLeft() {
     document.getElementById('cal-day-str').textContent = WEEKDAYS[selected.getDay()] + ', ' + MONTHS[selected.getMonth()];
     document.getElementById('cal-big-date').textContent = selected.getDate();
@@ -1424,6 +1456,7 @@ function initCalendar() {
       }
       container.appendChild(item);
     });
+    updateFade();
   }
 
   // "09:00AM", "1:30 PM", "All day" → minutes after midnight, for ordering (blank = last).
