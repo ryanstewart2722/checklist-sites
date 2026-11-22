@@ -330,18 +330,22 @@ body.editing .ov-img-ctl { display: block; }
 .cal-title { font-size: 32px; line-height: 32px; font-weight: 400; color: #000; }
 
 /* Long days scroll inside this box, which ends 16px above the big date's digits
-   (digit tops sit 493px below .cal-left's top; the list starts at 203px). A blur fades in
-   toward the number — full strength at the bottom, none at the top — while more is below. */
+   (digit tops sit 493px below .cal-left's top; the list starts at 203px). While more is below,
+   a white fade goes from 0% at its top to 100% at the bottom, next to the number. */
 .cal-scroll-wrap { position: relative; margin-top: 76px; z-index: 1; }
 .cal-scroll {
   max-height: 274px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
 }
 .cal-scroll::-webkit-scrollbar { display: none; }
 .cal-fade {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 110px; pointer-events: none;
-  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000);
-  mask-image: linear-gradient(to bottom, transparent, #000);
+  /* Tall and gradual: the last visible event sits at roughly half opacity, pure white only at the edge. */
+  position: absolute; left: -10px; right: -10px; bottom: 0; height: 190px; pointer-events: none;
+  background: linear-gradient(to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 35%,
+    rgba(255, 255, 255, 0.45) 65%,
+    rgba(255, 255, 255, 0.6) 88%,
+    #fff 100%);
   opacity: 0; transition: opacity 0.2s;
 }
 .cal-scroll-wrap.more .cal-fade { opacity: 1; }
@@ -517,6 +521,24 @@ body.editing .ed:focus { outline: 1px solid #0000ee; outline-offset: 2px; }
   height: 100%;
 }
 
+/* ── Signed out (public view) ── */
+#signin-block { display: none; }
+body.signed-out #signin-block {
+  display: grid; grid-template-columns: repeat(12, 1fr); column-gap: 10px; padding: 0 10px 140px;
+}
+#signin-btn {
+  grid-column: 2 / 4; height: 37px; border: 1px solid #000; border-radius: 0; background: #fff; color: #000;
+  font-family: 'Narrow', 'Arial Narrow', Arial, sans-serif; font-size: 22px; line-height: 1;
+  -webkit-appearance: none; appearance: none; cursor: pointer; transition: background 0.12s, color 0.12s;
+}
+#signin-btn:hover { background: #0000ee; color: #fff; border-color: #0000ee; }
+body.signed-out #overview, body.signed-out #todo, body.signed-out #streetview,
+body.signed-out .news-group:not(.news-scores), body.signed-out .cal-scroll-wrap,
+body.signed-out #weather-line, body.signed-out #edit-btn,
+body.signed-out .nl[data-sections~="overview"] { display: none; }
+body.auth-pending #overview, body.auth-pending #todo, body.auth-pending .cal-scroll-wrap,
+body.auth-pending #signin-block, body.auth-pending #edit-btn { visibility: hidden; }
+
 /* ═════════ Mobile ═════════
    Type scale taken from formafantasma.com on a 375px phone:
    text Times 22px/1.4 · section labels Times 16px caps, 0.075em tracking ·
@@ -524,6 +546,9 @@ body.editing .ed:focus { outline: 1px solid #0000ee; outline-offset: 2px; }
 @media (max-width: 767px) {
   :root { --m: 22px; --nav-h: 49px; }
   section { scroll-margin-top: var(--nav-h); }
+
+  body.signed-out #signin-block { display: block; padding: 0 var(--m) 72px; }
+  #signin-btn { width: 100%; height: 44px; }
 
   /* Nav: all 5 tabs fit across a phone */
   #nav { height: var(--nav-h); }
@@ -629,7 +654,7 @@ body.editing .ed:focus { outline: 1px solid #0000ee; outline-offset: 2px; }
 
 </style>
 </head>
-<body>
+<body class="auth-pending">
 
 <!-- Grid overlay (press G to toggle) -->
 <div id="grid-overlay">
@@ -728,6 +753,10 @@ body.editing .ed:focus { outline: 1px solid #0000ee; outline-offset: 2px; }
     </div>
   </div>
 </section>
+
+<!-- Shown only when signed out: the public page is word of the day, clocks, an empty calendar,
+     this button and sports scores. Everything personal appears after logging in. -->
+<div id="signin-block"><button type="button" id="signin-btn">Log in</button></div>
 
 <!-- Overview -->
 <section id="overview">
@@ -1062,7 +1091,6 @@ async function loadWeather() {
     } catch (e) {}
   }, () => {});
 }
-loadWeather();
 
 /* ── Word of the Day ── */
 const WORDS = [
@@ -1682,7 +1710,7 @@ function initTodo() {
 }
 
 /* ── Street View ── */
-(function initStreetView() {
+function initStreetView() {
   const nameEl = document.getElementById('sv-location-name');
   const mapEl  = document.getElementById('sv-minimap');
   const panoEl = document.getElementById('sv-pano');
@@ -1721,7 +1749,7 @@ function initTodo() {
     } catch(e) {}
     load(lat, lng, name);
   }, fallback, { timeout: 8000 });
-})();
+}
 
 /* ── News ── */
 (function initNews() {
@@ -1803,19 +1831,26 @@ function initTodo() {
   }
 
   async function scores(paths) {
-    const boards = await Promise.all(paths.map(p =>
-      fetch(`https://site.api.espn.com/apis/site/v2/sports/${p}/scoreboard`).then(r => r.json()).catch(() => null)));
+    // Today's and yesterday's games, so there are scores even before today's games finish.
+    const ymd = d => d.toISOString().slice(0, 10).replace(/-/g, '');
+    const days = [new Date(), new Date(Date.now() - 864e5)].map(ymd);
+    const boards = await Promise.all(paths.flatMap(p => days.map(day =>
+      fetch(`https://site.api.espn.com/apis/site/v2/sports/${p}/scoreboard?dates=${day}`).then(r => r.json()).catch(() => null))));
     const games = [];
+    const seen = new Set();
     boards.forEach(b => b?.events?.forEach(ev => {
-      if (ev.status?.type?.state !== 'post') return;
+      if (ev.status?.type?.state !== 'post' || seen.has(ev.id)) return;
+      seen.add(ev.id);
       const comp = ev.competitions[0];
       const teams = [...comp.competitors].sort((x, y) => (x.homeAway === 'away' ? -1 : 1));
       const winner = comp.competitors.find(c => c.winner) || teams[0];
+      // A photo from the game (ESPN's recap/highlight image); the winner's logo if there isn't one.
+      const photo = comp.headlines?.[0]?.video?.[0]?.thumbnail;
       games.push({
         date: ev.date,
         href: ev.links?.[0]?.href,
-        img: winner.team.logo,
-        imgBg: '#' + (winner.team.color || '0000ee'),
+        img: photo || winner.team.logo,
+        imgBg: photo ? null : '#' + (winner.team.color || '0000ee'),
         source: `${b.leagues?.[0]?.abbreviation || ''} ${ev.status.type.shortDetail || 'Final'}`.trim(),
         title: comp.headlines?.[0]?.shortLinkText || ev.name,
         meta: teams.map(c => `${c.team.abbreviation} ${c.team.shortDisplayName} ${c.score}`).join(' – '),
@@ -1826,7 +1861,7 @@ function initTodo() {
   }
 
   GROUPS.forEach(g => {
-    const group = el('div', 'news-group');
+    const group = el('div', 'news-group' + (g.scores ? ' news-scores' : ''));
     group.append(el('p', 'h32', g.kicker), el('p', 'h32', g.label));
     const row = el('div', 'news-cards');
     row.appendChild(el('p', 'news-loading', 'Loading…'));
@@ -1848,24 +1883,31 @@ function initTodo() {
 
 /* ── Sections that use saved data start once it has loaded ── */
 Store.ready.then(() => {
+  const signedOut = Store.needsSignIn;
+  document.body.classList.remove('auth-pending');
+  document.body.classList.toggle('signed-out', signedOut);
+  // Signed out, "Various" goes to the sports scores (Street View is hidden).
+  document.querySelector('.nl[data-sections~="news"]').setAttribute('href', signedOut ? '#news' : '#streetview');
   initOverview();
   initCalendar();
   initTodo();
+  if (!signedOut) { loadWeather(); initStreetView(); }
   updateActiveNav();
 });
 
-/* ── Edit / Save Changes ── */
+/* ── Log in / Edit / Save Changes ── */
 // No awaiting before sign-in: Safari only allows the Google popup if it opens right in the tap.
+function startSignIn() {
+  Store.signIn().catch(e => {
+    if (e.code === 'auth/popup-blocked') alert('Your browser blocked the Google sign-in window. Allow pop-ups for this site, then tap Log in again.');
+    else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') alert('Sign-in failed: ' + e.message);
+  });
+}
+document.getElementById('signin-btn').addEventListener('click', () => { if (Store.isReady) startSignIn(); });
 document.getElementById('edit-btn').addEventListener('click', () => {
   if (!Store.isReady) return;  // still loading
   if (Store.cloudError) { alert(Store.cloudError); return; }
-  if (Store.needsSignIn) {
-    Store.signIn().catch(e => {
-      if (e.code === 'auth/popup-blocked') alert('Your browser blocked the Google sign-in window. Allow pop-ups for this site, then tap “Sign in to edit” again.');
-      else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') alert('Sign-in failed: ' + e.message);
-    });
-    return;
-  }
+  if (Store.needsSignIn) { startSignIn(); return; }
   Edit.set(!Edit.on);
 });
 // Signed out, the button says so: your own data only appears after signing in on this browser.
@@ -1894,9 +1936,10 @@ const sections = document.querySelectorAll('section[id]');
 function updateActiveNav() {
   const line = 64 + (innerHeight - 64) * 0.35;
   const atBottom = innerHeight + scrollY >= document.documentElement.scrollHeight - 2;
-  let current = sections[0];
-  sections.forEach(s => { if (s.getBoundingClientRect().top <= line) current = s; });
-  if (atBottom) current = sections[sections.length - 1];
+  const shown = [...sections].filter(s => s.offsetHeight > 0);
+  let current = shown[0];
+  shown.forEach(s => { if (s.getBoundingClientRect().top <= line) current = s; });
+  if (atBottom) current = shown[shown.length - 1];
   links.forEach(a => a.classList.toggle('active', a.dataset.sections.split(' ').includes(current.id)));
 }
 addEventListener('scroll', updateActiveNav, { passive: true });
