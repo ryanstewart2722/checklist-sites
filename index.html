@@ -482,16 +482,19 @@ body.editing .ov-img-ctl { display: block; }
 .news-loading { font-size: 30px; line-height: 32px; color: #aaa; }
 
 /* ── Edit mode: nothing is editable until Edit is clicked; Save Changes writes it ── */
-#edit-btn {
-  position: fixed; right: 20px; bottom: 16px; z-index: 210;
+/* Small grey Log out + Edit in the bottom-right corner. */
+#account-bar { position: fixed; right: 20px; bottom: 16px; z-index: 210; display: flex; gap: 10px; }
+#logout-btn { display: none; }
+body.signed-in #logout-btn { display: block; }
+#edit-btn, #logout-btn {
   font-family: 'Narrow', 'Arial Narrow', Arial, sans-serif; font-size: 16px; line-height: 1;
   padding: 4px; border: 0; border-radius: 0; background: none; color: #c4c4c4;
   -webkit-appearance: none; appearance: none;
   cursor: pointer; transition: color 0.15s;
 }
-#edit-btn:focus { outline: none; }
-#edit-btn:focus-visible { outline: 1px solid #0000ee; outline-offset: 0; }
-#edit-btn:hover { color: #0000ee; }
+#edit-btn:focus, #logout-btn:focus { outline: none; }
+#edit-btn:focus-visible, #logout-btn:focus-visible { outline: 1px solid #0000ee; outline-offset: 0; }
+#edit-btn:hover, #logout-btn:hover { color: #0000ee; }
 body.editing #edit-btn { color: #0000ee; text-decoration: underline; text-underline-offset: 3px; }
 body:not(.editing) .hover-add,
 body:not(.editing) .cal-add,
@@ -564,7 +567,7 @@ body.auth-pending #signin-block, body.auth-pending #edit-btn { visibility: hidde
   }
   .row-x { left: -18px; top: 12px; font-size: 18px; }
   body.editing .row-x { opacity: 0.5; }
-  #edit-btn { right: 12px; bottom: 10px; }
+  #account-bar { right: 12px; bottom: 10px; }
 
   /* Every section becomes one column with 22px margins */
   #overview, #calendar, #todo, #streetview, #news {
@@ -674,7 +677,7 @@ body.auth-pending #signin-block, body.auth-pending #edit-btn { visibility: hidde
     <a class="nl" href="#streetview" data-sections="streetview news">Various</a>
   </div>
 </nav>
-<button id="edit-btn" type="button">Edit</button>
+<div id="account-bar"><button id="logout-btn" type="button">Log out</button><button id="edit-btn" type="button">Edit</button></div>
 
 <!-- Introduction -->
 <section id="introduction">
@@ -987,6 +990,8 @@ const Store = (() => {
     get mode() { return mode; },
     get needsSignIn() { return cloudConfigured && !user; },
     get cloudError() { return cloudError; },
+    get signedIn() { return !!user; },
+    signOut() { return auth.signOut().then(() => location.reload()); },
     get hasServer() { return mode === 'server'; },
     get failed() { return failed; },
   };
@@ -1886,6 +1891,7 @@ Store.ready.then(() => {
   const signedOut = Store.needsSignIn;
   document.body.classList.remove('auth-pending');
   document.body.classList.toggle('signed-out', signedOut);
+  document.body.classList.toggle('signed-in', Store.signedIn);
   // Signed out, "Various" goes to the sports scores (Street View is hidden).
   document.querySelector('.nl[data-sections~="news"]').setAttribute('href', signedOut ? '#news' : '#streetview');
   initOverview();
@@ -1904,6 +1910,10 @@ function startSignIn() {
   });
 }
 document.getElementById('signin-btn').addEventListener('click', () => { if (Store.isReady) startSignIn(); });
+document.getElementById('logout-btn').addEventListener('click', () => {
+  if (Edit.on && Store.dirty() && !confirm('You have unsaved changes. Log out anyway?')) return;
+  Store.signOut();
+});
 document.getElementById('edit-btn').addEventListener('click', () => {
   if (!Store.isReady) return;  // still loading
   if (Store.cloudError) { alert(Store.cloudError); return; }
